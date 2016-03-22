@@ -1775,7 +1775,7 @@ $(PLATFORM_CONFIG_FILE): boards/$(BOARD).py scripts/build_platform_config.py
 	$(Q)python scripts/build_platform_config.py $(BOARD)
 
 compile=$(CC) $(CFLAGS) $< -o $@
-cppcompile=$(CPP) $(CFLAGS) $< -o $@
+cppcompile=$(CPP) $(CFLAGS) -std=gnu++11 $< -o $@
 
 ifdef FIXED_OBJ_NAME
 link=$(LD) $(LDFLAGS) -o espruino $(OBJS) $(LIBS)
