@@ -26,8 +26,8 @@ info = {
  }
 };
 chip = {
-  'part' : "STM32F205",
-  'family' : "REDBEARDUO",
+  'part' : "STM32F205RGT6",
+  'family' : "STM32F2",
   'package' : "LQFP64",
   'ram' : 128,
   'flash' : 1024,
