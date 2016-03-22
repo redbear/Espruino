@@ -17,35 +17,19 @@
  
 //#define CPLUSPLUS
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 #include "jshardware.h"
 #include "jsutils.h"
 #include "jsparse.h"
 #include "jsinteractive.h"
 
-#ifdef __cplusplus
-}
-#endif
-
-
-// --------------------------------------------------- MBED DEFS
-
 
 //Timer systemTime;
 unsigned int systemTimeHigh;
 bool systemTimeWasHigh;
-
-
-#ifdef __cplusplus
-//extern "C" {
-#endif
-
-// ---------------------------------------------------
-
-
 
 
 // ----------------------------------------------------------------------------
@@ -192,6 +176,7 @@ void jshSPISetup(IOEventFlags device, JshSPIInfo *inf) {
  * of the previous send (or -1). If data<0, no data is sent and the function
  * waits for data to be returned */
 int jshSPISend(IOEventFlags device, int data) {
+	return 0;
 }
 
 /** Send 16 bit data through the given SPI device. */
@@ -249,7 +234,45 @@ void jshFlashRead(void *buf, uint32_t addr, uint32_t len) {
 void jshFlashWrite(void *buf, uint32_t addr, uint32_t len) {
 }
 
-// ----------------------------------------------------------------------------
-#ifdef __cplusplus
-//} // extern C
-#endif
+// Fake functions to make link stage walk through
+void jshReset(void) {
+  return;
+}
+
+unsigned int jshSetSystemClock(JsVar *options) {
+  return 0;
+}
+
+JsVar *jshFlashGetFree()
+{
+	return 0;
+}
+
+JshPinState jshPinGetState(Pin pin)
+{
+	return 0;
+}
+
+bool jshCanWatch(Pin pin)
+{
+	return false;
+}
+
+void jshSPIWait(
+    IOEventFlags device //!< Unknown
+) {
+  return;
+}
+
+void jshEnableWatchDog(JsVarFloat timeout) {
+  return;
+}
+
+JshPinFunction jshGetCurrentPinFunction(Pin pin)
+{
+	return 0;
+}
+
+
+
+
