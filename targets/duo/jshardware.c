@@ -26,8 +26,7 @@
 #include "jsparse.h"
 #include "jsinteractive.h"
 
-#include "application.h"
-#include "wiring.h"
+#include "usartserial_api.h"
 
 //Timer systemTime;
 unsigned int systemTimeHigh;
@@ -38,7 +37,6 @@ bool systemTimeWasHigh;
 // for non-blocking IO
 void jshInit() {
   jshInitDevices();
-
 }
 
 void jshKill() {
@@ -56,8 +54,8 @@ void jshIdle() {
   foo = !foo;
   jshPinSetValue(LED1_PININDEX, foo);*/
 
-  while (Serial.available())
-        jshPushIOCharEvent(EV_SERIAL1, Serial.read());
+  while (serial_available())
+        jshPushIOCharEvent(EV_SERIAL1, serial_read());
 }
 
 // ----------------------------------------------------------------------------
@@ -167,7 +165,7 @@ void jshUSARTKick(IOEventFlags device) {
   int c = jshGetCharToTransmit(device);
   if (c >= 0) {
   //  serial_irq_set(&mbedSerial[id], TxIrq, 1);
-  //  serial_putc(&mbedSerial[id], c);
+    serial_putc(c);
   }
 }
 

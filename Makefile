@@ -1406,16 +1406,18 @@ INCLUDE += -I$(ROOT)/targetlibs/duo/X_system/inc
 INCLUDE += -I$(ROOT)/targetlibs/duo/X_communication/src
 INCLUDE += -I$(ROOT)/targetlibs/duo/X_dynalib/inc
 INCLUDE += -I$(ROOT)/targetlibs/duo/X_lib
+INCLUDE += -I$(ROOT)/targetlibs/duo/wiring_api
 
 CPPSOURCES +=                              \
   targets/duo/application.cpp \
   targetlibs/duo/I_modules/duo/user-part/src/newlib_stubs.cpp \
-  targets/duo/jshardware.cpp
+  targetlibs/duo/wiring_api/usartserial_api.cpp
 
 SOURCES += \
   targetlibs/duo/I_modules/duo/user-part/src/module_info.c \
   targetlibs/duo/I_modules/duo/user-part/src/user_export.c \
   targetlibs/duo/I_modules/duo/user-part/src/user_module.c \
+  targets/duo/jshardware.c \
   targets/duo/wiring.c 
 
 LINKER_FILE = $(ROOT)/targetlibs/duo/linker_scripts/gcc/linker.ld
