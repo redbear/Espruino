@@ -1646,7 +1646,7 @@ WRAPPERSOURCES += targets/nucleo/jswrap_nucleo.c
 endif
 
 SOURCES += $(WRAPPERSOURCES)
-SOURCEOBJS = $(SOURCES:.c=.o) $(CPPSOURCES:.cpp=.o)
+SOURCEOBJS = $(SOURCES:.c=.o) $(CPPSOURCES:.cpp.o=.o)
 OBJS = $(SOURCEOBJS) $(PRECOMPILED_OBJS)
 
 
@@ -1716,7 +1716,8 @@ INCLUDE += -I$(ESP8266_SDK_ROOT)/include -I$(ROOT)/targets/esp8266
 endif # ESP8266
 
 export CC=$(CCPREFIX)gcc
-export LD=$(CCPREFIX)gcc
+export CPP=$(CCPREFIX)g++
+export LD=$(CCPREFIX)g++
 export AR=$(CCPREFIX)ar
 export AS=$(CCPREFIX)as
 export OBJCOPY=$(CCPREFIX)objcopy
@@ -1774,6 +1775,7 @@ $(PLATFORM_CONFIG_FILE): boards/$(BOARD).py scripts/build_platform_config.py
 	$(Q)python scripts/build_platform_config.py $(BOARD)
 
 compile=$(CC) $(CFLAGS) $< -o $@
+cppcompile=$(CPP) $(CFLAGS) $< -o $@
 
 ifdef FIXED_OBJ_NAME
 link=$(LD) $(LDFLAGS) -o espruino $(OBJS) $(LIBS)
@@ -1793,9 +1795,9 @@ quiet_obj_to_bin= GEN $(PROJ_NAME).$2
 	@echo $($(quiet_)compile)
 	@$(call compile)
 
-.cpp.o: $(PLATFORM_CONFIG_FILE) $(PININFOFILE).h
+.cpp.o: %.cpp $(PLATFORM_CONFIG_FILE) $(PININFOFILE).h
 	@echo $($(quiet_)compile)
-	@$(call compile)
+	@$(call cppcompile)
 
 .s.o:
 	@echo $($(quiet_)compile)
