@@ -1646,7 +1646,7 @@ WRAPPERSOURCES += targets/nucleo/jswrap_nucleo.c
 endif
 
 SOURCES += $(WRAPPERSOURCES)
-SOURCEOBJS = $(SOURCES:.c=.o) $(CPPSOURCES:.cpp.o=.o)
+SOURCEOBJS = $(SOURCES:.c=.o) $(CPPSOURCES:.cpp=.cpp.o)
 OBJS = $(SOURCEOBJS) $(PRECOMPILED_OBJS)
 
 
@@ -1795,7 +1795,7 @@ quiet_obj_to_bin= GEN $(PROJ_NAME).$2
 	@echo $($(quiet_)compile)
 	@$(call compile)
 
-.cpp.o: %.cpp $(PLATFORM_CONFIG_FILE) $(PININFOFILE).h
+%.cpp.o: %.cpp $(PLATFORM_CONFIG_FILE) $(PININFOFILE).h
 	@echo $($(quiet_)compile)
 	@$(call cppcompile)
 
