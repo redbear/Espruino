@@ -1410,12 +1410,13 @@ INCLUDE += -I$(ROOT)/targetlibs/duo/X_lib
 CPPSOURCES +=                              \
   targets/duo/application.cpp \
   targetlibs/duo/I_modules/duo/user-part/src/newlib_stubs.cpp \
-  targets/duo/jshardware.cpp
 
 SOURCES += \
   targetlibs/duo/I_modules/duo/user-part/src/module_info.c \
   targetlibs/duo/I_modules/duo/user-part/src/user_export.c \
-  targetlibs/duo/I_modules/duo/user-part/src/user_module.c
+  targetlibs/duo/I_modules/duo/user-part/src/user_module.c \
+  targets/duo/jshardware.c \
+  targets/duo/wiring.c 
 
 LINKER_FILE = $(ROOT)/targetlibs/duo/linker_scripts/gcc/linker.ld
 
