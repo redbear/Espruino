@@ -549,6 +549,11 @@ endif
 
 FLASH_BAUD ?= 115200 # The flash baud rate
 # End of ESP8266_BOARD
+
+else ifdef REDBEARDUO
+EMBEDDED=1
+BOARD=REDBEARDUO
+
 else
 ifeq ($(shell uname -m),armv6l)
 RASPBERRYPI=1 # just a guess
