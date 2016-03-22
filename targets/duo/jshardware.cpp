@@ -26,6 +26,8 @@
 #include "jsparse.h"
 #include "jsinteractive.h"
 
+#include "application.h"
+#include "wiring.h"
 
 //Timer systemTime;
 unsigned int systemTimeHigh;
@@ -54,8 +56,8 @@ void jshIdle() {
   foo = !foo;
   jshPinSetValue(LED1_PININDEX, foo);*/
 
-//  while (serial_readable(&mbedSerial[0])>0)
-//        jshPushIOCharEvent(EV_SERIAL1, serial_getc(&mbedSerial[0]));
+  while (Serial.available())
+        jshPushIOCharEvent(EV_SERIAL1, Serial.read());
 }
 
 // ----------------------------------------------------------------------------
@@ -250,7 +252,8 @@ JsVar *jshFlashGetFree()
 
 JshPinState jshPinGetState(Pin pin)
 {
-	return 0;
+    JshPinState j;
+	return j;
 }
 
 bool jshCanWatch(Pin pin)
@@ -270,7 +273,8 @@ void jshEnableWatchDog(JsVarFloat timeout) {
 
 JshPinFunction jshGetCurrentPinFunction(Pin pin)
 {
-	return 0;
+    JshPinFunction j;
+	return j;
 }
 
 

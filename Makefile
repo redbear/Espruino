@@ -1410,12 +1410,13 @@ INCLUDE += -I$(ROOT)/targetlibs/duo/X_lib
 CPPSOURCES +=                              \
   targets/duo/application.cpp \
   targetlibs/duo/I_modules/duo/user-part/src/newlib_stubs.cpp \
+  targets/duo/jshardware.cpp
 
 SOURCES += \
   targetlibs/duo/I_modules/duo/user-part/src/module_info.c \
   targetlibs/duo/I_modules/duo/user-part/src/user_export.c \
   targetlibs/duo/I_modules/duo/user-part/src/user_module.c \
-  targets/duo/jshardware.c \
+#  targets/duo/jshardware.c \
   targets/duo/wiring.c 
 
 LINKER_FILE = $(ROOT)/targetlibs/duo/linker_scripts/gcc/linker.ld
@@ -1978,8 +1979,13 @@ $(PROJ_NAME).bin : $(PROJ_NAME).elf
 	@echo $(call $(quiet_)obj_to_bin,binary,bin)
 	@$(call obj_to_bin,binary,bin)
 ifndef TRAVIS
-	bash scripts/check_size.sh $(PROJ_NAME).bin
+	bash scripts/check_size.sh $(PROJ_NAME).bin    
 endif
+ifdef REDBEARDUO	# Adding CRC32 to the binary
+ifdef MACOSX		# Sorry, only for Mac OSX at this moment
+	bash scripts/crc.sh $(PROJ_NAME).bin
+endif    
+endif    
 
 proj: $(PROJ_NAME).lst $(PROJ_NAME).bin $(PROJ_NAME).hex
 
@@ -2000,6 +2006,9 @@ else ifdef MICROBIT
 else ifdef NRF5X
 	if [ -d "/media/$(USER)/JLINK" ]; then cp $(PROJ_NAME).hex /media/$(USER)/JLINK;sync; fi
 	if [ -d "/media/JLINK" ]; then cp $(PROJ_NAME).hex /media/JLINK;sync; fi
+else ifdef REDBEARDUO
+	# load to user part using DFU-UTIL mode 
+	sudo dfu-util -d 2b04:d058 -a 0 -s 0x080C0000:leave -D $(PROJ_NAME).bin
 else
 	echo ST-LINK flash
 	st-flash --reset write $(PROJ_NAME).bin $(BASEADDRESS)
