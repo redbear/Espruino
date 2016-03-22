@@ -506,11 +506,6 @@ BOARD=ESP8266_BOARD
 ifndef DISABLE_LTO
 OPTIMIZEFLAGS+=-Os -std=gnu11 -fgnu89-inline -flto -fno-fat-lto-objects -Wl,--allow-multiple-definition
 #OPTIMIZEFLAGS+=-DLINK_TIME_OPTIMISATION # this actually slows things down!
-
-else ifdef REDBEARDUO
-EMBEDDED=1
-BOARD=REDBEARDUO
-
 else
 # DISABLE_LTO is necessary in order to analyze static string sizes (see: topstring makefile target)
 OPTIMIZEFLAGS+=-Os -std=gnu11 -fgnu89-inline -Wl,--allow-multiple-definition
