@@ -2,6 +2,8 @@
 #include "application.h"
 #include "wiring.h"
 
+SYSTEM_MODE(MANUAL);
+
 void setup()
 {
   Serial.begin(115200);
