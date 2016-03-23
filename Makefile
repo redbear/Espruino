@@ -83,12 +83,25 @@ ifeq ($(shell uname),Darwin)
 MACOSX=1
 CFLAGS+=-D__MACOSX__
 STAT_FLAGS='-f ''%z'''
+MAKE_OS=OSX
 else
 STAT_FLAGS='-c ''%s'''
+MAKE_OS=LINUX
 endif
 
 ifeq ($(OS),Windows_NT)
 MINGW=1
+MAKE_OS=WINDOWS
+endif
+
+ifeq (WINDOWS,$(MAKE_OS))
+filesize=`stat --print %s $1`
+else
+ifeq (LINUX, $(MAKE_OS))
+filesize=`stat -c %s $1`
+else
+filesize=`stat -f%z $1`
+endif
 endif
 
 ifdef RELEASE
@@ -1985,10 +1998,15 @@ ifndef TRAVIS
 	bash scripts/check_size.sh $(PROJ_NAME).bin    
 endif
 ifdef REDBEARDUO	# Adding CRC32 to the binary
-ifdef MACOSX		# Sorry, only for Mac OSX at this moment
-	bash scripts/crc.sh $(PROJ_NAME).bin
-endif    
-endif    
+	if [ -s $@ ]; then \
+	head -c $$(($(call filesize,$@) - 38)) $@ > $@.no_crc && \
+	tail -c 38 $@ > $@.crc_block && \
+	test "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20280078563412" = `xxd -p -c 500 $@.crc_block` && \
+	shasum -a 256 $@.no_crc | cut -c 1-65 | xxd -r -p | dd bs=1 of=$@ seek=$$(($(call filesize,$@) - 38)) conv=notrunc  && \
+	head -c $$(($(call filesize,$@) - 4)) $@ > $@.no_crc && \
+	crc32 $@.no_crc | cut -c 1-10 | xxd -r -p | dd bs=1 of=$@ seek=$$(($(call filesize,$@) - 4)) conv=notrunc ;\
+	fi
+endif     
 
 proj: $(PROJ_NAME).lst $(PROJ_NAME).bin $(PROJ_NAME).hex
 
@@ -2050,3 +2068,7 @@ clean:
 	$(Q)rm -f $(PROJ_NAME).bin
 	$(Q)rm -f $(PROJ_NAME).srec
 	$(Q)rm -f $(PROJ_NAME).lst
+ifdef REDBEARDUO
+	$(Q)rm -f $(PROJ_NAME).bin.crc_block
+	$(Q)rm -f $(PROJ_NAME).bin.no_crc
+endif
