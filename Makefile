@@ -84,14 +84,17 @@ MACOSX=1
 CFLAGS+=-D__MACOSX__
 STAT_FLAGS='-f ''%z'''
 MAKE_OS=OSX
+SUDO=sudo
 else
 STAT_FLAGS='-c ''%s'''
 MAKE_OS=LINUX
+SUDO=sudo
 endif
 
 ifeq ($(OS),Windows_NT)
 MINGW=1
 MAKE_OS=WINDOWS
+SUDO=
 endif
 
 ifeq (WINDOWS,$(MAKE_OS))
@@ -2028,8 +2031,7 @@ else ifdef NRF5X
 	if [ -d "/media/$(USER)/JLINK" ]; then cp $(PROJ_NAME).hex /media/$(USER)/JLINK;sync; fi
 	if [ -d "/media/JLINK" ]; then cp $(PROJ_NAME).hex /media/JLINK;sync; fi
 else ifdef REDBEARDUO
-	# load to user part using DFU-UTIL mode 
-	sudo dfu-util -d 2b04:d058 -a 0 -s 0x080C0000:leave -D $(PROJ_NAME).bin
+	$(SUDO) dfu-util -d 2b04:d058 -a 0 -s 0x080C0000:leave -D $(PROJ_NAME).bin
 else
 	echo ST-LINK flash
 	st-flash --reset write $(PROJ_NAME).bin $(BASEADDRESS)
