@@ -51,7 +51,7 @@ void usartserial1_putc(unsigned char c)
 
 bool usartserial1_isenable(void)
 {
-    Serial1.isEnabled();
+    return Serial1.isEnabled();
 }
 
 
@@ -103,7 +103,7 @@ void usartserial2_putc(unsigned char c)
 
 bool usartserial2_isenable(void)
 {
-    Serial2.isEnabled();
+    return Serial2.isEnabled();
 }
 
 #ifdef __cplusplus
