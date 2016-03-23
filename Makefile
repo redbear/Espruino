@@ -1411,7 +1411,8 @@ INCLUDE += -I$(ROOT)/targetlibs/duo/wiring_api
 CPPSOURCES +=                              \
   targets/duo/application.cpp \
   targetlibs/duo/I_modules/duo/user-part/src/newlib_stubs.cpp \
-  targetlibs/duo/wiring_api/usartserial_api.cpp
+  targetlibs/duo/wiring_api/usartserial_api.cpp \
+  targetlibs/duo/wiring_api/usbserial_api.cpp
 
 SOURCES += \
   targetlibs/duo/I_modules/duo/user-part/src/module_info.c \
@@ -1790,6 +1791,7 @@ obj_dump=$(OBJDUMP) -x -S $(PROJ_NAME).elf > $(PROJ_NAME).lst
 obj_to_bin=$(OBJCOPY) -O $1 $(PROJ_NAME).elf $(PROJ_NAME).$2
 
 quiet_compile= CC $@
+quiet_cppcompile= CPP $@
 quiet_link= LD $@
 quiet_obj_dump= GEN $(PROJ_NAME).lst
 quiet_obj_to_bin= GEN $(PROJ_NAME).$2
@@ -1799,7 +1801,7 @@ quiet_obj_to_bin= GEN $(PROJ_NAME).$2
 	@$(call compile)
 
 %.cpp.o: %.cpp $(PLATFORM_CONFIG_FILE) $(PININFOFILE).h
-	@echo $($(quiet_)compile)
+	@echo $($(quiet_)cppcompile)
 	@$(call cppcompile)
 
 .s.o:

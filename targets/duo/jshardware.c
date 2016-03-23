@@ -26,7 +26,7 @@
 #include "jsparse.h"
 #include "jsinteractive.h"
 
-#include "usartserial_api.h"
+#include "usbserial_api.h"
 
 //Timer systemTime;
 unsigned int systemTimeHigh;
@@ -54,8 +54,8 @@ void jshIdle() {
   foo = !foo;
   jshPinSetValue(LED1_PININDEX, foo);*/
 
-  while (serial_available())
-        jshPushIOCharEvent(EV_SERIAL1, serial_read());
+  while (usbserial_available())
+        jshPushIOCharEvent(EV_SERIAL1, usbserial_read());
 }
 
 // ----------------------------------------------------------------------------
@@ -165,7 +165,7 @@ void jshUSARTKick(IOEventFlags device) {
   int c = jshGetCharToTransmit(device);
   if (c >= 0) {
   //  serial_irq_set(&mbedSerial[id], TxIrq, 1);
-    serial_putc(c);
+    usbserial_putc(c);
   }
 }
 
