@@ -1433,7 +1433,8 @@ CPPSOURCES +=                              \
   targetlibs/duo/wiring_api/servo_api.cpp \
   targetlibs/duo/wiring_api/ble_api.cpp \
   targetlibs/duo/wiring_api/i2c_api.cpp \
-  targetlibs/duo/wiring_api/spi_api.cpp
+  targetlibs/duo/wiring_api/spi_api.cpp \
+  targetlibs/duo/wiring_api/tone_api.cpp
 
 SOURCES += \
   targetlibs/duo/I_modules/duo/user-part/src/module_info.c \
