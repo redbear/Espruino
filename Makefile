@@ -1431,7 +1431,8 @@ CPPSOURCES +=                              \
   targetlibs/duo/wiring_api/usbserial_api.cpp \
   targetlibs/duo/wiring_api/gpio_api.cpp \
   targetlibs/duo/wiring_api/servo_api.cpp \
-  targetlibs/duo/wiring_api/ble_api.cpp
+  targetlibs/duo/wiring_api/ble_api.cpp \
+  targetlibs/duo/wiring_api/i2c_api.cpp
 
 SOURCES += \
   targetlibs/duo/I_modules/duo/user-part/src/module_info.c \
