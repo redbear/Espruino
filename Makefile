@@ -74,7 +74,7 @@ CFLAGS=-Wall -Wextra -Wconversion -Werror=implicit-function-declaration -fno-str
 LDFLAGS=-Winline
 OPTIMIZEFLAGS=
 #-fdiagnostics-show-option - shows which flags can be used with -Werror
-DEFINES+=-DGIT_COMMIT=$(shell git log -1 --format="%H")
+DEFINES+=-DGIT_COMMIT=$(shell git log -1 --format="%H" 2>nul)
 
 # Espruino flags...
 USE_MATH=1
@@ -115,9 +115,9 @@ endif
 ifndef ALT_RELEASE
 # Default release labeling.  (This may fail and give inconsistent results due to the fact that
 # travis does a shallow clone.)
-LATEST_RELEASE=$(shell git tag | grep RELEASE_ | sort | tail -1)
+LATEST_RELEASE=$(shell git tag 2>nul | grep RELEASE_ | sort | tail -1)
 # use egrep to count lines instead of wc to avoid whitespace error on Mac
-COMMITS_SINCE_RELEASE=$(shell git log --oneline $(LATEST_RELEASE)..HEAD | egrep -c .)
+COMMITS_SINCE_RELEASE=$(shell git log --oneline $(LATEST_RELEASE)..HEAD 2>nul | egrep -c .)
 ifneq ($(COMMITS_SINCE_RELEASE),0)
 DEFINES += -DBUILDNUMBER=\"$(COMMITS_SINCE_RELEASE)\"
 endif
@@ -131,7 +131,7 @@ else
 # v1.81.peter_experiment_83bd432, where the last letters are the short of the current commit SHA.
 # Warning: this same release label derivation is also in scripts/common.py in get_version()
 LATEST_RELEASE=$(shell egrep "define JS_VERSION .*\"$$" src/jsutils.h | egrep -o '[0-9]v[0-9]+')
-COMMITS_SINCE_RELEASE=$(ALT_RELEASE)_$(subst -,_,$(shell git name-rev --name-only HEAD))_$(shell git rev-parse --short HEAD)
+COMMITS_SINCE_RELEASE=$(ALT_RELEASE)_$(subst -,_,$(shell git name-rev --name-only HEAD 2>nul))_$(shell git rev-parse --short HEAD 2>nul)
 # Figure out whether we're building a tagged commit (true release) or not
 TAGGED:=$(shell if git describe --tags --exact-match >/dev/null 2>&1; then echo yes; fi)
 ifeq ($(TAGGED),yes)

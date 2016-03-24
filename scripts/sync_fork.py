@@ -5,10 +5,10 @@ from subprocess import check_output, call
 import sys
 
 if __name__ == '__main__':
-    REMOTES_CMD = ['git', 'remote', '-v']
-    FETCH_UPSTREAM_CMD = ['git', 'fetch', 'upstream']
-    CHECKOUT_MASTER_CMD = ['git', 'checkout', 'master']
-    MERGE_UPSTREAM_CMD = ['git', 'merge', 'upstream/master']
+    REMOTES_CMD = ['git', 'remote', '-v', '2>nul']
+    FETCH_UPSTREAM_CMD = ['git', 'fetch', 'upstream', '2>nul']
+    CHECKOUT_MASTER_CMD = ['git', 'checkout', 'master', '2>nul']
+    MERGE_UPSTREAM_CMD = ['git', 'merge', 'upstream/master', '2>nul']
 	
     print("\nREMOTES:\t")
     call(REMOTES_CMD)
