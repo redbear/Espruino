@@ -1812,8 +1812,8 @@ endif
 obj_dump=$(OBJDUMP) -x -S $(PROJ_NAME).elf > $(PROJ_NAME).lst
 obj_to_bin=$(OBJCOPY) -O $1 $(PROJ_NAME).elf $(PROJ_NAME).$2
 
-quiet_compile= CC $@
-quiet_cppcompile= CPP $@
+quiet_compile= $(CC) $<
+quiet_cppcompile= $(CPP) $<
 quiet_link= LD $@
 quiet_obj_dump= GEN $(PROJ_NAME).lst
 quiet_obj_to_bin= GEN $(PROJ_NAME).$2
