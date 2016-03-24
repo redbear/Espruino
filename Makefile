@@ -47,6 +47,7 @@
 # ESP8266_BOARD=1         # ESP8266
 # EFM32GGSTK=1            # Currently only works with DEBUG=1
 # EMW3165=1               # MXCHIP EMW3165: STM32F411CE, BCM43362, 512KB flash 128KB RAM
+# REDBEARDUO=1            # RedBear Duo: STM32F205, 120MHz BCM43438 WiFi/Bluetooth, 1MB Flash, 128KB RAM
 # Or nothing for standard linux compile
 #
 # Also:
@@ -82,12 +83,28 @@ ifeq ($(shell uname),Darwin)
 MACOSX=1
 CFLAGS+=-D__MACOSX__
 STAT_FLAGS='-f ''%z'''
+MAKE_OS=OSX
+SUDO=sudo
 else
 STAT_FLAGS='-c ''%s'''
+MAKE_OS=LINUX
+SUDO=sudo
 endif
 
 ifeq ($(OS),Windows_NT)
 MINGW=1
+MAKE_OS=WINDOWS
+SUDO=
+endif
+
+ifeq (WINDOWS,$(MAKE_OS))
+filesize=`stat --print %s $1`
+else
+ifeq (LINUX, $(MAKE_OS))
+filesize=`stat -c %s $1`
+else
+filesize=`stat -f%z $1`
+endif
 endif
 
 ifdef RELEASE
@@ -494,7 +511,6 @@ USE_FILESYSTEM=1
 USE_GRAPHICS=1
 USE_NET=1
 
-
 else ifdef ESP8266_BOARD
 EMBEDDED=1
 USE_NET=1
@@ -544,6 +560,11 @@ endif
 
 FLASH_BAUD ?= 115200 # The flash baud rate
 # End of ESP8266_BOARD
+
+else ifdef REDBEARDUO
+EMBEDDED=1
+BOARD=REDBEARDUO
+
 else
 ifeq ($(shell uname -m),armv6l)
 RASPBERRYPI=1 # just a guess
@@ -1365,6 +1386,114 @@ ifeq ($(FAMILY), EFM32GG)
 
 endif #FAMILY == EFM32
 
+ifdef REDBEARDUO
+
+ARM = 1
+ARM_HAS_OWN_CMSIS = 1
+
+INCLUDE += -I$(ROOT)/targetlibs/duo/CMSIS/Include
+
+INCLUDE += -I$(ROOT)/targetlibs/duo/A_user/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/E_rt-dynalib/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/F_wiring/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/H_platform/shared/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/H_platform/MCU/shared/STM32/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/H_platform/MCU/STM32F2xx/STM32_StdPeriph_Driver/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/H_platform/MCU/STM32F2xx/SPARK_Firmware_Driver/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/H_platform/MCU/STM32F2xx/STM32_USB_Device_Driver/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/H_platform/MCU/STM32F2xx/STM32_USB_OTG_Driver/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/H_platform/MCU/STM32F2xx/CMSIS/Device/ST/Include
+INCLUDE += -I$(ROOT)/targetlibs/duo/I_modules/duo/user-part/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/I_modules/shared/stm32f2xx/inc
+  
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_define
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_hal/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_hal/shared
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_hal/src/stm32f2xx
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_hal/src/stm32
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_hal/src/duo
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_hal/src/duo/include
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_hal/src/duo/libraries/btstack/port
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_hal/src/duo/libraries/btstack/src
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_hal/src/duo/libraries/btstack/src/ble
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_hal/src/duo/libraries/btstack/src/classic
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_services/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_system/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_communication/src
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_dynalib/inc
+INCLUDE += -I$(ROOT)/targetlibs/duo/X_lib
+INCLUDE += -I$(ROOT)/targetlibs/duo/wiring_api
+
+CPPSOURCES +=                              \
+  targets/duo/application.cpp \
+  targetlibs/duo/I_modules/duo/user-part/src/newlib_stubs.cpp \
+  targetlibs/duo/wiring_api/usartserial_api.cpp \
+  targetlibs/duo/wiring_api/usbserial_api.cpp \
+  targetlibs/duo/wiring_api/gpio_api.cpp \
+  targetlibs/duo/wiring_api/servo_api.cpp \
+  targetlibs/duo/wiring_api/ble_api.cpp \
+  targetlibs/duo/wiring_api/i2c_api.cpp \
+  targetlibs/duo/wiring_api/spi_api.cpp
+
+SOURCES += \
+  targetlibs/duo/I_modules/duo/user-part/src/module_info.c \
+  targetlibs/duo/I_modules/duo/user-part/src/user_export.c \
+  targetlibs/duo/I_modules/duo/user-part/src/user_module.c \
+  targets/duo/jshardware.c \
+  targets/duo/wiring.c 
+
+LINKER_FILE = $(ROOT)/targetlibs/duo/linker_scripts/gcc/linker.ld
+
+# warnning flags
+WARNFLAGS += -Wall -Wno-switch -Wno-error=deprecated-declarations -Wno-conversion -Wno-unused-variable \
+             -Wno-unused-parameter -Wno-unused-function -Wno-unused-value
+
+# optimize flags
+OPTIMIZEFLAGS += -Os -ffunction-sections -fdata-sections -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc \
+                 -fno-builtin -fmessage-length=0 -fno-strict-aliasing
+
+# achitecture flags
+ARCHFLAGS += -mcpu=cortex-m3 -mthumb
+
+# debug flags
+DEBUGFLAGS += -g3 -gdwarf-2
+
+# Combine other flags into CFLAGS
+CFLAGS += $(WARNFLAGS) $(DEBUGFLAGS)
+
+# libs and search path
+LIBS_DEPS += -lcommunication-dynalib -lhal-dynalib -lplatform -lrt-dynalib -lservices-dynalib \
+             -lsystem-dynalib -lwiring_globals -lwiring 
+
+LDFLAGS += -L$(ROOT)/targetlibs/duo/linker_scripts/gcc
+LDFLAGS += -L$(ROOT)/targetlibs/duo/linker_scripts/linker
+LDFLAGS += -L$(ROOT)/targetlibs/duo/linker_scripts/linker/stm32f2xx
+LDFLAGS += -L$(ROOT)/targetlibs/duo/X_lib
+LDFLAGS += -Wl,--whole-archive -lSTM32F2xx_Peripheral_Libraries -Wl,--no-whole-archive\
+           -nostartfiles -Xlinker --gc-sections \
+           -Wl,--whole-archive $(LIBS_DEPS) -Wl,--no-whole-archive\
+           -lnosys \
+           -Wl,--defsym,USER_FIRMWARE_IMAGE_SIZE=0x40000 \
+           -Wl,--defsym,USER_FIRMWARE_IMAGE_LOCATION=0x80C0000 \
+#           -lstdc++_nano -lm \
+#           -Wl,--start-group -lgcc -lg_nano -lc_nano -Wl,--end-group \
+#           -Wl,--start-group -lgcc -lc_nano -Wl,--end-group
+
+DEFINES += -DSTM32_DEVICE -DSTM32F2XX -DPLATFORM_THREADING=1 \
+           -DPLATFORM_ID=88 -DPLATFORM_NAME=duo \
+           -DUSBD_VID_SPARK=0x2B04 -DUSBD_PID_DFU=0xD058 -DUSBD_PID_CDC=0xC058 \
+           -DRELEASE_BUILD -DINCLUDE_PLATFORM=1 -DUSE_STDPERIPH_DRIVER -DDFU_BUILD_ENABLE \
+           -DSYSTEM_VERSION_STRING=0.2.3 \
+           -DUSER_FIRMWARE_IMAGE_SIZE=0x40000 -DUSER_FIRMWARE_IMAGE_LOCATION=0x80C0000 \
+           -DMODULAR_FIRMWARE=1 -DMODULE_FUNCTION=5 -DMODULE_INDEX=1 -DMODULE_VERSION=6 -DMODULE_DEPENDENCY=4,2,6 \
+           -DSPARK=1
+
+#PRECOMPILED_OBJS += $(ROOT)/targetlibs/duo/I_modules/duo/user-part/src/user_export.o
+#PRECOMPILED_OBJS += $(ROOT)/targetlibs/duo/I_modules/duo/user-part/src/user_module.o
+#PRECOMPILED_OBJS += $(ROOT)/targetlibs/duo/I_modules/duo/user-part/src/module_info.o
+
+endif
+
 ifdef NRF5X
 
   # Just try and get rid of the compile warnings.
@@ -1542,7 +1671,7 @@ WRAPPERSOURCES += targets/nucleo/jswrap_nucleo.c
 endif
 
 SOURCES += $(WRAPPERSOURCES)
-SOURCEOBJS = $(SOURCES:.c=.o) $(CPPSOURCES:.cpp=.o)
+SOURCEOBJS = $(SOURCES:.c=.o) $(CPPSOURCES:.cpp=.cpp.o)
 OBJS = $(SOURCEOBJS) $(PRECOMPILED_OBJS)
 
 
@@ -1612,7 +1741,8 @@ INCLUDE += -I$(ESP8266_SDK_ROOT)/include -I$(ROOT)/targets/esp8266
 endif # ESP8266
 
 export CC=$(CCPREFIX)gcc
-export LD=$(CCPREFIX)gcc
+export CPP=$(CCPREFIX)g++
+export LD=$(CCPREFIX)g++
 export AR=$(CCPREFIX)ar
 export AS=$(CCPREFIX)as
 export OBJCOPY=$(CCPREFIX)objcopy
@@ -1670,6 +1800,7 @@ $(PLATFORM_CONFIG_FILE): boards/$(BOARD).py scripts/build_platform_config.py
 	$(Q)python scripts/build_platform_config.py $(BOARD)
 
 compile=$(CC) $(CFLAGS) $< -o $@
+cppcompile=$(CPP) $(CFLAGS) -std=gnu++11 $< -o $@
 
 ifdef FIXED_OBJ_NAME
 link=$(LD) $(LDFLAGS) -o espruino $(OBJS) $(LIBS)
@@ -1681,6 +1812,7 @@ obj_dump=$(OBJDUMP) -x -S $(PROJ_NAME).elf > $(PROJ_NAME).lst
 obj_to_bin=$(OBJCOPY) -O $1 $(PROJ_NAME).elf $(PROJ_NAME).$2
 
 quiet_compile= CC $@
+quiet_cppcompile= CPP $@
 quiet_link= LD $@
 quiet_obj_dump= GEN $(PROJ_NAME).lst
 quiet_obj_to_bin= GEN $(PROJ_NAME).$2
@@ -1689,9 +1821,9 @@ quiet_obj_to_bin= GEN $(PROJ_NAME).$2
 	@echo $($(quiet_)compile)
 	@$(call compile)
 
-.cpp.o: $(PLATFORM_CONFIG_FILE) $(PININFOFILE).h
-	@echo $($(quiet_)compile)
-	@$(call compile)
+%.cpp.o: %.cpp $(PLATFORM_CONFIG_FILE) $(PININFOFILE).h
+	@echo $($(quiet_)cppcompile)
+	@$(call cppcompile)
 
 .s.o:
 	@echo $($(quiet_)compile)
@@ -1871,8 +2003,18 @@ $(PROJ_NAME).bin : $(PROJ_NAME).elf
 	@echo $(call $(quiet_)obj_to_bin,binary,bin)
 	@$(call obj_to_bin,binary,bin)
 ifndef TRAVIS
-	bash scripts/check_size.sh $(PROJ_NAME).bin
+	bash scripts/check_size.sh $(PROJ_NAME).bin    
 endif
+ifdef REDBEARDUO	# Adding CRC32 to the binary
+	if [ -s $@ ]; then \
+	head -c $$(($(call filesize,$@) - 38)) $@ > $@.no_crc && \
+	tail -c 38 $@ > $@.crc_block && \
+	test "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20280078563412" = `xxd -p -c 500 $@.crc_block` && \
+	shasum -a 256 $@.no_crc | cut -c 1-65 | xxd -r -p | dd bs=1 of=$@ seek=$$(($(call filesize,$@) - 38)) conv=notrunc  && \
+	head -c $$(($(call filesize,$@) - 4)) $@ > $@.no_crc && \
+	crc32 $@.no_crc | cut -c 1-10 | xxd -r -p | dd bs=1 of=$@ seek=$$(($(call filesize,$@) - 4)) conv=notrunc ;\
+	fi
+endif     
 
 proj: $(PROJ_NAME).lst $(PROJ_NAME).bin $(PROJ_NAME).hex
 
@@ -1893,6 +2035,8 @@ else ifdef MICROBIT
 else ifdef NRF5X
 	if [ -d "/media/$(USER)/JLINK" ]; then cp $(PROJ_NAME).hex /media/$(USER)/JLINK;sync; fi
 	if [ -d "/media/JLINK" ]; then cp $(PROJ_NAME).hex /media/JLINK;sync; fi
+else ifdef REDBEARDUO
+	$(SUDO) dfu-util -d 2b04:d058 -a 0 -s 0x080C0000:leave -D $(PROJ_NAME).bin
 else
 	echo ST-LINK flash
 	st-flash --reset write $(PROJ_NAME).bin $(BASEADDRESS)
@@ -1931,3 +2075,7 @@ clean:
 	$(Q)rm -f $(PROJ_NAME).bin
 	$(Q)rm -f $(PROJ_NAME).srec
 	$(Q)rm -f $(PROJ_NAME).lst
+ifdef REDBEARDUO
+	$(Q)rm -f $(PROJ_NAME).bin.crc_block
+	$(Q)rm -f $(PROJ_NAME).bin.no_crc
+endif
