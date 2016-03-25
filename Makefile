@@ -2038,7 +2038,12 @@ else ifdef NRF5X
 	if [ -d "/media/$(USER)/JLINK" ]; then cp $(PROJ_NAME).hex /media/$(USER)/JLINK;sync; fi
 	if [ -d "/media/JLINK" ]; then cp $(PROJ_NAME).hex /media/JLINK;sync; fi
 else ifdef REDBEARDUO
+ifdef RBLINK
+	@echo "Using the RBLink to flash"
+	openocd -d1 -s /usr/local/share/openocd/scripts -f $(ROOT)/targetlibs/duo/openocd/redbearduo.cfg -c "program $(PROJ_NAME).bin verify reset exit 0x80c0000"
+else
 	$(SUDO) dfu-util -d 2b04:d058 -a 0 -s 0x080C0000:leave -D $(PROJ_NAME).bin
+endif
 else
 	echo ST-LINK flash
 	st-flash --reset write $(PROJ_NAME).bin $(BASEADDRESS)
