@@ -1,6 +1,7 @@
 #ifndef _TCP_SERVER_API_H
 #define _TCP_SERVER_API_H
 
+typedef struct TCPServer tcp_server;
 
 void* TCPServer_newTCPServer(uint16_t port);
 void TCPServer_deleteTCPServer(void *tcp_server);

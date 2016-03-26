@@ -1,6 +1,7 @@
-#ifndef _TCP_SERVER_API_H
-#define _TCP_SERVER_API_H
+#ifndef _TCP_CLIENT_API_H
+#define _TCP_CLIENT_API_H
 
+typedef struct TCPClient tcp_client;
 
 void* TCPClient_newTCPClient(void);
 void TCPClient_deleteTCPClient(void *tcp_client);
