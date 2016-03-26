@@ -1493,6 +1493,10 @@ DEFINES += -DSTM32_DEVICE -DSTM32F2XX -DPLATFORM_THREADING=1 \
            -DMODULAR_FIRMWARE=1 -DMODULE_FUNCTION=5 -DMODULE_INDEX=1 -DMODULE_VERSION=6 -DMODULE_DEPENDENCY=4,2,6 \
            -DSPARK=1
 
+ifdef RBLINK
+    DEFINES += -DRBLINK
+endif
+    
 #PRECOMPILED_OBJS += $(ROOT)/targetlibs/duo/I_modules/duo/user-part/src/user_export.o
 #PRECOMPILED_OBJS += $(ROOT)/targetlibs/duo/I_modules/duo/user-part/src/user_module.o
 #PRECOMPILED_OBJS += $(ROOT)/targetlibs/duo/I_modules/duo/user-part/src/module_info.o

@@ -45,6 +45,12 @@ void jshInit() {
   wifi_connect();
 
   TCPServer_begin(server);
+  
+#if defined(RBLINK)
+  usartserial1_begin(115200);
+#else
+  usbserial_begin(115200);
+#endif  
 }
 
 void jshKill() {
@@ -75,9 +81,14 @@ void jshIdle() {
   {
       client = TCPServer_available(server);
   }
- 
+
+#if defined(RBLINK) 
+  while (usartserial1_available())
+    jshPushIOCharEvent(EV_SERIAL1, usartserial1_read());
+#else
   while (usbserial_available())
-        jshPushIOCharEvent(EV_SERIAL1, usbserial_read());
+    jshPushIOCharEvent(EV_SERIAL1, usbserial_read());
+#endif        
 }
 
 // ----------------------------------------------------------------------------
@@ -187,7 +198,12 @@ void jshUSARTKick(IOEventFlags device) {
   int c = jshGetCharToTransmit(device);
   if (c >= 0) {
   //  serial_irq_set(&mbedSerial[id], TxIrq, 1);
+#if defined(RBLINK)
+    usartserial1_putc(c);
+#else
     usbserial_putc(c);
+#endif
+    
     if (client)
         TCPClient_write(client, &c, 1);
   }
