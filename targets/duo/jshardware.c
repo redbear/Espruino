@@ -14,12 +14,6 @@
  #include <stdlib.h>
  #include <string.h>
  #include <stdio.h>
- 
-//#define CPLUSPLUS
-
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
 
 #include "jshardware.h"
 #include "jsutils.h"
@@ -27,16 +21,30 @@
 #include "jsinteractive.h"
 
 #include "usbserial_api.h"
+#include "usartserial_api.h"
+#include "tcpserver_api.h"
+#include "tcpclient_api.h"
+#include "wifi_api.h"
 
 //Timer systemTime;
 unsigned int systemTimeHigh;
 bool systemTimeWasHigh;
 
+static tcp_server *server = NULL;
+static tcp_client *client = NULL;
 
 // ----------------------------------------------------------------------------
 // for non-blocking IO
 void jshInit() {
   jshInitDevices();
+  
+  server = TCPServer_newTCPServer(8888);
+
+  wifi_on();
+  wifi_setCredentials("TEST_AP", "TEST_PIN", 3);
+  wifi_connect();
+
+  TCPServer_begin(server);
 }
 
 void jshKill() {
@@ -54,6 +62,20 @@ void jshIdle() {
   foo = !foo;
   jshPinSetValue(LED1_PININDEX, foo);*/
 
+  if (client)
+  {
+    while (TCPClient_available(client))
+    {
+        uint8_t c;
+        TCPClient_read(client, &c, 1);
+        jshPushIOCharEvent(EV_SERIAL1, c);        
+    }
+  }
+  else
+  {
+      client = TCPServer_available(server);
+  }
+ 
   while (usbserial_available())
         jshPushIOCharEvent(EV_SERIAL1, usbserial_read());
 }
@@ -75,7 +97,7 @@ void jshInterruptOn() {
 }
 
 void jshDelayMicroseconds(int microsec) {
- //  wait_us(microsec);
+  // wait_us(microsec);
 }
 
 void jshPinSetState(Pin pin, JshPinState state) {
@@ -166,6 +188,8 @@ void jshUSARTKick(IOEventFlags device) {
   if (c >= 0) {
   //  serial_irq_set(&mbedSerial[id], TxIrq, 1);
     usbserial_putc(c);
+    if (client)
+        TCPClient_write(client, &c, 1);
   }
 }
 
@@ -274,7 +298,3 @@ JshPinFunction jshGetCurrentPinFunction(Pin pin)
     JshPinFunction j;
 	return j;
 }
-
-
-
-
