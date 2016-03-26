@@ -1423,9 +1423,15 @@ INCLUDE += -I$(ROOT)/targetlibs/duo/X_communication/src
 INCLUDE += -I$(ROOT)/targetlibs/duo/X_dynalib/inc
 INCLUDE += -I$(ROOT)/targetlibs/duo/X_lib
 INCLUDE += -I$(ROOT)/targetlibs/duo/wiring_api
+INCLUDE += -I$(ROOT)/targets/duo/MDNS
 
 CPPSOURCES +=                              \
   targets/duo/application.cpp \
+  targets/duo/MDNS/MDNS.cpp \
+  targets/duo/MDNS/Buffer.cpp \
+  targets/duo/MDNS/Label.cpp \
+  targets/duo/MDNS/QuerySet.cpp \
+  targets/duo/MDNS/TxtData.cpp \
   targetlibs/duo/I_modules/duo/user-part/src/newlib_stubs.cpp \
   targetlibs/duo/wiring_api/usartserial_api.cpp \
   targetlibs/duo/wiring_api/usbserial_api.cpp \
