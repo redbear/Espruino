@@ -3,7 +3,7 @@
 #include "wiring.h"
 #include "MDNS.h"
 
-SYSTEM_MODE(MANUAL);
+SYSTEM_MODE(SEMI_AUTOMATIC);
 
 MDNS mdns;
 

@@ -37,13 +37,11 @@ static tcp_client *client = NULL;
 // for non-blocking IO
 void jshInit() {
   jshInitDevices();
-  
-  server = TCPServer_newTCPServer(8888);
 
   wifi_on();
-  wifi_setCredentials("TEST_AP", "TEST_PIN", 3);
   wifi_connect();
-
+  
+  server = TCPServer_newTCPServer(8888);
   TCPServer_begin(server);
   
 #if defined(RBLINK)
