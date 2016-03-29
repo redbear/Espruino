@@ -230,7 +230,7 @@ def only_from_package(pins, package):
   for pin in pins:
 #    print json.dumps(pin)
     pinnumber =  pin["csv"][package]
-    if pinnumber!="" and pinnumber!="0":
+    if pinnumber!="" and pinnumber!="0" and pinnumber!="-":
       newpins.append(pin)
   return newpins
 
