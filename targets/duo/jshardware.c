@@ -20,11 +20,7 @@
 #include "jsparse.h"
 #include "jsinteractive.h"
 
-#include "usbserial_api.h"
-#include "usartserial_api.h"
-#include "tcpserver_api.h"
-#include "tcpclient_api.h"
-#include "wifi_api.h"
+#include "wiring.h"
 
 //Timer systemTime;
 unsigned int systemTimeHigh;
@@ -110,18 +106,21 @@ void jshDelayMicroseconds(int microsec) {
 }
 
 void jshPinSetState(Pin pin, JshPinState state) {
-
+  uint16_t _pin = jspin_to_hal(pin);
+  PinMode _mode = jspinmode_to_hal(state);
+  pinMode(_pin, _mode);
 }
 
 void jshPinSetValue(Pin pin, bool value) {
- // gpio_dir(&mbedPins[pin], PIN_OUTPUT);
- // gpio_write(&mbedPins[pin], value);
+  uint16_t _pin = jspin_to_hal(pin);
+  pinMode(_pin, OUTPUT);
+  digitalWrite(_pin, (uint8_t)value);
 }
 
 bool jshPinGetValue(Pin pin) {
- // gpio_dir(&mbedPins[pin], PIN_INPUT);
- // return gpio_read(&mbedPins[pin]);
-return 1;
+  uint16_t _pin = jspin_to_hal(pin);
+  pinMode(_pin, INPUT);
+  return digitalRead(_pin);
 }
 
 bool jshIsPinValid(Pin pin) {
