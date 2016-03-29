@@ -45,8 +45,8 @@ void jshInit() {
   
   // start serial console for user interaction
   // for both USB and serial 1 of the Duo
-  usartserial1_begin(115200);
-  usbserial_begin(115200);  
+  usartserial1_begin(9600);
+  usbserial_begin(9600);  
 }
 
 void jshKill() {
