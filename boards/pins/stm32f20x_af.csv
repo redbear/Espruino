@@ -1,0 +1,141 @@
+,AF00,AF01,AF02,AF03,AF04,AF05,AF06,AF07,AF08,AF09,AF10,AF11,AF12,AF13,AF14,AF15
+PA0,-,TIM2_CH1_ETR,TIM5_CH1,TIM8_ETR,-,-,-,USART2_CTS,UART4_TX,-,-,ETH_MII_CRS,-,-,-,EVENT OUT
+PA1,-,TIM2_CH2,TIM5_CH2,-,-,-,-,USART2_RTS,UART4_RX,-,-,ETH_MII_RX_CLK/ETH_RMII_REF_CLK,-,-,-,EVENT OUT
+PA2,-,TIM2_CH3,TIM5_CH3,TIM9_CH1,-,-,-,USART2_TX,-,-,-,ETH_MDIO,-,-,-,EVENT OUT
+PA3,-,TIM2_CH4,TIM5_CH4,TIM9_CH2,-,-,-,USART2_RX,-,-,OTG_HS_ULPI_D0,ETH _MII_COL,-,-,-,EVENT OUT
+PA4,-,-,-,-,-,SPI1_NSS,SPI3_NSS/I2S3_WS,USART2_CK,-,-,-,-,OTG_HS_SOF,DCMI_HSYNC,-,EVENT OUT
+PA5,-,TIM2_CH1_ETR,-,TIM8_CH1N,-,SPI1_SCK,-,-,-,-,OTG_HS_ULPI_CK,-,-,-,-,EVENT OUT
+PA6,-,TIM1_BKIN,TIM3_CH1,TIM8_BKIN,-,SPI1_MISO,-,-,-,TIM13_CH1,-,-,-,DCMI_PIXCK,-,EVENT OUT
+PA7,-,TIM1_CH1N,TIM3_CH2,TIM8_CH1N,-,SPI1_MOSI,-,-,-,TIM14_CH1,-,ETH_MII _RX_DV/ETH_RMII_CRS_DV,-,-,-,EVENT OUT
+PA8,MCO_1,TIM1_CH1,-,-,I2C3_SCL,-,-,USART1_CK,-,-,OTG_FS_SOF,-,-,-,-,EVENT OUT
+PA9,-,TIM1_CH2,-,-,I2C3_SMBA,-,-,USART1_TX,-,-,-,-,-,DCMI_D0,-,EVENT OUT
+PA10,-,TIM1_CH3,-,-,-,-,-,USART1_RX,-,-,OTG_FS_ID,-,-,DCMI_D1,-,EVENT OUT
+PA11,-,TIM1_CH4,-,-,-,-,-,USART1_CTS,-,CAN1_RX,OTG_FS_DM,-,-,-,-,EVENT OUT
+PA12,-,TIM1_ETR,-,-,-,-,-,USART1_RTS,-,CAN1_TX,OTG_FS_DP,-,-,-,-,EVENT OUT
+PA13,JTMS_SWDIO,-,-,-,-,-,-,-,-,-,-,-,-,-,-,EVENT OUT
+PA14,JTCK_SWCLK,-,-,-,-,-,-,-,-,-,-,-,-,-,-,EVENT OUT
+PA15,JTDI,TIM2_CH1/TIM2_ETR,-,-,-,SPI1_NSS,SPI3_NSS/I2S3_WS,-,-,-,-,-,-,-,-,EVENT OUT
+PB0,-,TIM1_CH2N,TIM3_CH3,TIM8_CH2N,-,-,-,-,-,-,OTG_HS_ULPI_D1,ETH _MII_RXD2,-,-,-,EVENT OUT
+PB1,-,TIM1_CH3N,TIM3_CH4,TIM8_CH3N,-,-,-,-,-,-,OTG_HS_ULPI_D2,ETH _MII_RXD3,-,-,-,EVENT OUT
+PB2,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,EVENT OUT
+PB3,JTDO-SWO,TIM2_CH2,-,-,-,SPI1_SCK,SPI3_SCK/I2S3_SCK,-,-,-,-,-,-,-,-,EVENT OUT
+PB4,JTRST,-,TIM3_CH1,-,-,SPI1_MISO,SPI3_MISO,-,-,-,-,-,-,-,-,EVENT OUT
+PB5,-,-,TIM3_CH2,-,I2C1_SMBA,SPI1_MOSI,SPI3_MOSI/I2S3_SD,-,-,CAN2_RX,OTG_HS_ULPI_D7,ETH _PPS_OUT,-,DCMI_D10,-,EVENT OUT
+PB6,-,-,TIM4_CH1,-,I2C1_SCL,-,-,USART1_TX,-,CAN2_TX,-,-,-,DCMI_D5,-,EVENT OUT
+PB7,-,-,TIM4_CH2,-,I2C1_SDA,-,-,USART1_RX,-,-,-,-,FSMC_NL,DCMI_VSYNC,-,EVENT OUT
+PB8,-,-,TIM4_CH3,TIM10_CH1,I2C1_SCL,-,-,-,-,CAN1_RX,-,ETH _MII_TXD3,SDIO_D4,DCMI_D6,-,EVENT OUT
+PB9,-,-,TIM4_CH4,TIM11_CH1,I2C1_SDA,SPI2_NSS/I2S2_WS,-,-,-,CAN1_TX,-,-,SDIO_D5,DCMI_D7,-,EVENT OUT
+PB10,-,TIM2_CH3,-,-,I2C2_SCL,SPI2_SCK/I2S2_SCK,-,USART3_TX,-,-,OTG_HS_ULPI_D3,ETH_ MII_RX_ER,-,-,-,EVENT OUT
+PB11,-,TIM2_CH4,-,-,I2C2_SDA,-,-,USART3_RX,-,-,OTG_HS_ULPI_D4,ETH _MII_TX_EN/ETH_RMII_TX_EN,-,-,-,EVENT OUT
+PB12,-,TIM1_BKIN,-,-,I2C2_SMBA,SPI2_NSS/I2S2_WS,-,USART3_CK,-,CAN2_RX,OTG_HS_ULPI_D5,ETH _MII_TXD0/ETH _RMII_TXD0,OTG_HS_ID,-,-,EVENT OUT
+PB13,-,TIM1_CH1N,-,-,-,SPI2_SCK/I2S2_SCK,-,USART3_CTS,-,CAN2_TX,OTG_HS_ULPI_D6,ETH _MII_TXD1/ETH _RMII_TXD1,-,-,-,EVENT OUT
+PB14,-,TIM1_CH2N,-,TIM8_CH2N,-,SPI2_MISO,-,USART3_RTS,-,TIM12_CH1,-,-,OTG_HS_DM,-,-,EVENT OUT
+PB15,RTC_50Hz,TIM1_CH3N,-,TIM8_CH3N,-,SPI2_MOSI/I2S2_SD,-,-,-,TIM12_CH2,-,-,OTG_HS_DP,-,-,EVENT OUT
+PC0,-,-,-,-,-,-,-,-,-,-,OTG_HS_ULPI_STP,-,-,-,-,EVENT OUT
+PC1,-,-,-,-,-,-,-,-,-,-,-,ETH_MDC,-,-,-,EVENT OUT
+PC2,-,-,-,-,-,SPI2_MISO,-,-,-,-,OTG_HS_ULPI_DIR,ETH _MII_TXD2,-,-,-,EVENT OUT
+PC3,-,-,-,-,-,SPI2_MOSI,-,-,-,-,OTG_HS_ULPI_NXT,ETH_MII_TX_CLK,-,-,-,EVENT OUT
+PC4,-,-,-,-,-,-,-,-,-,-,-,ETH_MII_RXD0/ETH_RMII_RXD0,-,-,-,EVENT OUT
+PC5,-,-,-,-,-,-,-,-,-,-,-,ETH_MII_RXD1/ETH_RMII_RXD1,-,-,-,EVENT OUT
+PC6,-,-,TIM3_CH1,TIM8_CH1,-,I2S2_MCK,-,-,USART6_TX,-,-,-,SDIO_D6,DCMI_D0,-,EVENT OUT
+PC7,-,-,TIM3_CH2,TIM8_CH2,-,-,I2S3_MCK,-,USART6_RX,-,-,-,SDIO_D7,DCMI_D1,-,EVENT OUT
+PC8,-,-,TIM3_CH3,TIM8_CH3,-,-,-,-,USART6_CK,-,-,-,SDIO_D0,DCMI_D2,-,EVENT OUT
+PC9,MCO_2,-,TIM3_CH4,TIM8_CH4,I2C3_SDA,I2S_CKIN,I2S3_CKIN,-,-,-,-,-,SDIO_D1,DCMI_D3,-,EVENT OUT
+PC10,-,-,-,-,-,-,SPI3_SCK/I2S3_SCK,USART3_TX,UART4_TX,-,-,-,SDIO_D2,DCMI_D8,-,EVENT OUT
+PC11,-,-,-,-,-,-,SPI3_MISO,USART3_RX,UART4_RX,-,-,-,SDIO_D3,DCMI_D4,-,EVENT OUT
+PC12,-,-,-,-,-,-,SPI3_MOSI/I2S3_SD,USART3_CK,UART5_TX,-,-,-,SDIO_CK,DCMI_D9,-,EVENT OUT
+PC13,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,EVENT OUT
+PC14,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,EVENT OUT
+PC15,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,EVENT OUT
+PD0,-,-,-,-,-,-,-,-,-,CAN1_RX,-,-,FSMC_D2,-,-,EVENT OUT
+PD1,-,-,-,-,-,-,-,-,-,CAN1_TX,-,-,FSMC_D3,-,-,EVENT OUT
+PD2,-,-,TIM3_ETR,-,-,-,-,-,UART5_RX,-,-,-,SDIO_CMD,DCMI_D11,-,EVENT OUT
+PD3,-,-,-,-,-,-,-,USART2_CTS,-,-,-,-,FSMC_CLK,-,-,EVENT OUT
+PD4,-,-,-,-,-,-,-,USART2_RTS,-,-,-,-,FSMC_NOE,-,-,EVENT OUT
+PD5,-,-,-,-,-,-,-,USART2_TX,-,-,-,-,FSMC_NWE,-,-,EVENT OUT
+PD6,-,-,-,-,-,-,-,USART2_RX,-,-,-,-,FSMC_NWAIT,-,-,EVENT OUT
+PD7,-,-,-,-,-,-,-,USART2_CK,-,-,-,-,FSMC_NE1/FSMC_NCE2,-,-,EVENT OUT
+PD8,-,-,-,-,-,-,-,USART3_TX,-,-,-,-,FSMC_D13,-,-,EVENT OUT
+PD9,-,-,-,-,-,-,-,USART3_RX,-,-,-,-,FSMC_D14,-,-,EVENT OUT
+PD10,-,-,-,-,-,-,-,USART3_CK,-,-,-,-,FSMC_D15,-,-,EVENT OUT
+PD11,-,-,-,-,-,-,-,USART3_CTS,-,-,-,-,FSMC_A16,-,-,EVENT OUT
+PD12,-,-,TIM4_CH1,-,-,-,-,USART3_RTS,-,-,-,-,FSMC_A17,-,-,EVENT OUT
+PD13,-,-,TIM4_CH2,-,-,-,-,-,-,-,-,-,FSMC_A18,-,-,EVENT OUT
+PD14,-,-,TIM4_CH3,-,-,-,-,-,-,-,-,-,FSMC_D0,-,-,EVENT OUT
+PD15,-,-,TIM4_CH4,-,-,-,-,-,-,-,-,-,FSMC_D1,-,-,EVENT OUT
+PE0,-,-,TIM4_ETR,-,-,-,-,-,-,-,-,-,FSMC_NBL0,DCMI_D2,-,EVENT OUT
+PE1,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_NBL1,DCMI_D3,-,EVENT OUT
+PE2,TRACECLK,-,-,-,-,-,-,-,-,-,-,ETH _MII_TXD3,FSMC_A23,-,-,EVENT OUT
+PE3,TRACED0,-,-,-,-,-,-,-,-,-,-,-,FSMC_A19,-,-,EVENT OUT
+PE4,TRACED1,-,-,-,-,-,-,-,-,-,-,-,FSMC_A20,DCMI_D4,-,EVENT OUT
+PE5,TRACED2,-,-,TIM9_CH1,-,-,-,-,-,-,-,-,FSMC_A21,DCMI_D6,-,EVENT OUT
+PE6,TRACED3,-,-,TIM9_CH2,-,-,-,-,-,-,-,-,FSMC_A22,DCMI_D7,-,EVENT OUT
+PE7,-,TIM1_ETR,-,-,-,-,-,-,-,-,-,-,FSMC_D4,-,-,EVENT OUT
+PE8,-,TIM1_CH1N,-,-,-,-,-,-,-,-,-,-,FSMC_D5,-,-,EVENT OUT
+PE9,-,TIM1_CH1,-,-,-,-,-,-,-,-,-,-,FSMC_D6,-,-,EVENT OUT
+PE10,-,TIM1_CH2N,-,-,-,-,-,-,-,-,-,-,FSMC_D7,-,-,EVENT OUT
+PE11,-,TIM1_CH2,-,-,-,-,-,-,-,-,-,-,FSMC_D8,-,-,EVENT OUT
+PE12,-,TIM1_CH3N,-,-,-,-,-,-,-,-,-,-,FSMC_D9,-,-,EVENT OUT
+PE13,-,TIM1_CH3,-,-,-,-,-,-,-,-,-,-,FSMC_D10,-,-,EVENT OUT
+PE14,-,TIM1_CH4,-,-,-,-,-,-,-,-,-,-,FSMC_D11,-,-,EVENT OUT
+PE15,-,TIM1_BKIN,-,-,-,-,-,-,-,-,-,-,FSMC_D12,-,-,EVENT OUT
+PF0,-,-,-,-,I2C2_SDA,-,-,-,-,-,-,-,FSMC_A0,-,-,EVENT OUT
+PF1,-,-,-,-,I2C2_SCL,-,-,-,-,-,-,-,FSMC_A1,-,-,EVENT OUT
+PF2,-,-,-,-,I2C2_SMBA,-,-,-,-,-,-,-,FSMC_A2,-,-,EVENT OUT
+PF3,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_A3,-,-,EVENT OUT
+PF4,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_A4,-,-,EVENT OUT
+PF5,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_A5,-,-,EVENT OUT
+PF6,-,-,-,TIM10_CH1,-,-,-,-,-,-,-,-,FSMC_NIORD,-,-,EVENT OUT
+PF7,-,-,-,TIM11_CH1,-,-,-,-,-,-,-,-,FSMC_NREG,-,-,EVENT OUT
+PF8,-,-,-,-,-,-,-,-,-,TIM13_CH1,-,-,FSMC_NIOWR,-,-,EVENT OUT
+PF9,-,-,-,-,-,-,-,-,-,TIM14_CH1,-,-,FSMC_CD,-,-,EVENT OUT
+PF10,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_INTR,-,-,EVENT OUT
+PF11,-,-,-,-,-,-,-,-,-,-,-,-,-,DCMI_D12,-,EVENT OUT
+PF12,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_A6,-,-,EVENT OUT
+PF13,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_A7,-,-,EVENT OUT
+PF14,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_A8,-,-,EVENT OUT
+PF15,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_A9,-,-,EVENT OUT
+PG0,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_A10,-,-,EVENT OUT
+PG1,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_A11,-,-,EVENT OUT
+PG2,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_A12,-,-,EVENT OUT
+PG3,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_A13,-,-,EVENT OUT
+PG4,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_A14,-,-,EVENT OUT
+PG5,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_A15,-,-,EVENT OUT
+PG6,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_INT2,-,-,EVENT OUT
+PG7,-,-,-,-,-,-,-,-,USART6_CK,-,-,-,FSMC_INT3,-,-,EVENT OUT
+PG8,-,-,-,-,-,-,-,-,USART6_RTS,-,-,ETH _PPS_OUT,-,-,-,EVENT OUT
+PG9,-,-,-,-,-,-,-,-,USART6_RX,-,-,-,FSMC_NE2/FSMC_NCE3,-,-,EVENT OUT
+PG10,-,-,-,-,-,-,-,-,-,-,-,-,FSMC_NCE4_1/FSMC_NE3,-,-,EVENT OUT
+PG11,-,-,-,-,-,-,-,-,-,-,-,ETH _MII_TX_EN/ETH_RMII_TX_EN,FSMC_NCE4_2,-,-,EVENT OUT
+PG12,-,-,-,-,-,-,-,-,USART6_RTS,-,-,-,FSMC_NE4,-,-,EVENT OUT
+PG13,-,-,-,-,-,-,-,-,UART6_CTS,-,-,ETH _MII_TXD0/ETH _RMII_TXD0,FSMC_A24,-,-,EVENT OUT
+PG14,-,-,-,-,-,-,-,-,USART6_TX,-,-,ETH _MII_TXD1/ETH _RMII_TXD1,FSMC_A25,-,-,EVENT OUT
+PG15,-,-,-,-,-,-,-,-,USART6_CTS,-,-,-,-,DCMI_D13,-,EVENT OUT
+PH0,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,EVENT OUT
+PH1,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,EVENT OUT
+PH2,-,-,-,-,-,-,-,-,-,-,-,ETH _MII_CRS,-,-,-,EVENT OUT
+PH3,-,-,-,-,-,-,-,-,-,-,-,ETH _MII_COL,-,-,-,EVENT OUT
+PH4,-,-,-,-,I2C2_SCL,-,-,-,-,-,OTG_HS_ULPI_NXT,-,-,-,-,EVENT OUT
+PH5,-,-,-,-,I2C2_SDA,-,-,-,-,-,-,-,-,-,-,EVENT OUT
+PH6,-,-,-,-,I2C2_SMBA,-,-,-,-,TIM12_CH1,-,ETH _MII_RXD2,-,-,-,EVENT OUT
+PH7,-,-,-,-,I2C3_SCL,-,-,-,-,-,-,ETH _MII_RXD3,-,-,-,EVENT OUT
+PH8,-,-,-,-,I2C3_SDA,-,-,-,-,-,-,-,-,DCMI_HSYNC,-,EVENT OUT
+PH9,-,-,-,-,I2C3_SMBA,-,-,-,-,TIM12_CH2,-,-,-,DCMI_D0,-,EVENT OUT
+PH10,-,-,TIM5_CH1,-,-,-,-,-,-,-,-,-,-,DCMI_D1,-,EVENT OUT
+PH11,-,-,TIM5_CH2,-,-,-,-,-,-,-,-,-,-,DCMI_D2,-,EVENT OUT
+PH12,-,-,TIM5_CH3,-,-,-,-,-,-,-,-,-,-,DCMI_D3,-,EVENT OUT
+PH13,-,-,-,TIM8_CH1N,-,-,-,-,-,CAN1_TX,-,-,-,-,-,EVENT OUT
+PH14,-,-,-,TIM8_CH2N,-,-,-,-,-,-,-,-,-,DCMI_D4,-,EVENT OUT
+PH15,-,-,-,TIM8_CH3N,-,-,-,-,-,-,-,-,-,DCMI_D11,-,EVENT OUT
+PI0,-,-,TIM5_CH4,-,-,SPI2_NSS/I2S2_WS,-,-,-,-,-,-,-,DCMI_D13,-,EVENT OUT
+PI1,-,-,-,-,-,SPI2_SCK/I2S2_SCK,-,-,-,-,-,-,-,DCMI_D8,-,EVENT OUT
+PI2,-,-,-,TIM8_CH4,-,SPI2_MISO,-,-,-,-,-,-,-,DCMI_D9,-,EVENT OUT
+PI3,-,-,-,TIM8_ETR,-,SPI2_MOSI/I2S2_SD,-,-,-,-,-,-,-,DCMI_D10,-,EVENT OUT
+PI4,-,-,-,TIM8_BKIN,-,-,-,-,-,-,-,-,-,DCMI_D5,-,EVENT OUT
+PI5,-,-,-,TIM8_CH1,-,-,-,-,-,-,-,-,-,DCMI_VSYNC,-,EVENT OUT
+PI6,-,-,-,TIM8_CH2,-,-,-,-,-,-,-,-,-,DCMI_D6,-,EVENT OUT
+PI7,-,-,-,TIM8_CH3,-,-,-,-,-,-,-,-,-,DCMI_D7,-,EVENT OUT
+PI8,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,EVENT OUT
+PI9,-,-,-,-,-,-,-,-,-,CAN1_RX,-,-,-,-,-,EVENT OUT
+PI10,-,-,-,-,-,-,-,-,-,-,-,ETH _MII_RX_ER,-,-,-,EVENT OUT
+PI11,-,-,-,-,-,-,-,-,-,-,OTG_HS_ULPI_DIR,-,-,-,-,EVENT OUT
