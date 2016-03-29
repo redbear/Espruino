@@ -12,21 +12,9 @@ void mdns_init()
     bool success = mdns.setHostname("duo");
      
     if (success) {
-        success = mdns.setService("tcp", "espruino", 8888, "Espruino for Duo");
-        Serial.println("setService");
-    }
+        success = mdns.setService("tcp", "espruino", TCPPORT, "Espruino for RedBear Duo");
 
-    if (success) {
         success = mdns.begin();
-        Serial.println("mdns.begin");
-    }
-    
-    if (success) {
-        Spark.publish("mdns/setup", "success");
-        Serial.println("mdns/setup success");
-    } else {
-        Spark.publish("mdns/setup", "error");
-        Serial.println("mdns/setup error");
     }
 }
 

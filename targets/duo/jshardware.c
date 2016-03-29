@@ -11,9 +11,10 @@
  * Platform Specific part of Hardware interface Layer
  * ----------------------------------------------------------------------------
  */
- #include <stdlib.h>
- #include <string.h>
- #include <stdio.h>
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 #include "jshardware.h"
 #include "jsutils.h"
@@ -34,17 +35,18 @@ static tcp_client *client = NULL;
 void jshInit() {
   jshInitDevices();
 
+  // turn on WiFi and connect to the AP stored
   wifi_on();
   wifi_connect();
   
-  server = TCPServer_newTCPServer(8888);
+  // start a tcp server with port number
+  server = TCPServer_newTCPServer(TCPPORT);
   TCPServer_begin(server);
   
-#if defined(RBLINK)
+  // start serial console for user interaction
+  // for both USB and serial 1 of the Duo
   usartserial1_begin(115200);
-#else
-  usbserial_begin(115200);
-#endif  
+  usbserial_begin(115200);  
 }
 
 void jshKill() {
@@ -74,15 +76,39 @@ void jshIdle() {
   else
   {
       client = TCPServer_available(server);
+
+      if (client)
+        jsiConsolePrint(
+#ifndef LINUX
+          // set up terminal to avoid word wrap
+          "\e[?7l"
+#endif
+          // rectangles @ http://www.network-science.de/ascii/
+          "\n"
+          " _____                 _ \n"
+          "|   __|___ ___ ___ _ _|_|___ ___ \n"
+          "|   __|_ -| . |  _| | | |   | . |\n"
+          "|_____|___|  _|_| |___|_|_|_|___|\n"
+          "          |_| http://espruino.com\n"
+          " "JS_VERSION" Copyright 2016 G.Williams\n"
+        // Point out about donations - but don't bug people
+        // who bought boards that helped Espruino
+#if !defined(PICO) && !defined(ESPRUINOBOARD)
+          "\n"
+          "Espruino is Open Source. Our work is supported\n"
+          "only by sales of official boards and donations:\n"
+          "http://espruino.com/Donate\n"
+#endif
+        );
   }
 
-#if defined(RBLINK) 
+
+  // read data from serial
   while (usartserial1_available())
     jshPushIOCharEvent(EV_SERIAL1, usartserial1_read());
-#else
+
   while (usbserial_available())
     jshPushIOCharEvent(EV_SERIAL1, usbserial_read());
-#endif        
 }
 
 // ----------------------------------------------------------------------------
@@ -193,14 +219,12 @@ void jshUSARTSetup(IOEventFlags device, JshUSARTInfo *inf) {
 void jshUSARTKick(IOEventFlags device) {
   int id = 0; // TODO: device
   int c = jshGetCharToTransmit(device);
+
   if (c >= 0) {
-  //  serial_irq_set(&mbedSerial[id], TxIrq, 1);
-#if defined(RBLINK)
     usartserial1_putc(c);
-#else
     usbserial_putc(c);
-#endif
-    
+
+    // if a tcp client connected, also sending out
     if (client)
         TCPClient_write(client, &c, 1);
   }

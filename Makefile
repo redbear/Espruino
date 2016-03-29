@@ -1497,7 +1497,8 @@ DEFINES += -DSTM32_DEVICE -DSTM32F2XX -DPLATFORM_THREADING=1 \
            -DSYSTEM_VERSION_STRING=0.2.3 \
            -DUSER_FIRMWARE_IMAGE_SIZE=0x40000 -DUSER_FIRMWARE_IMAGE_LOCATION=0x80C0000 \
            -DMODULAR_FIRMWARE=1 -DMODULE_FUNCTION=5 -DMODULE_INDEX=1 -DMODULE_VERSION=6 -DMODULE_DEPENDENCY=4,2,6 \
-           -DSPARK=1
+           -DSPARK=1 \
+           -DTCPPORT=28888
 
 ifdef RBLINK
     DEFINES += -DRBLINK
@@ -2053,7 +2054,7 @@ else ifdef NRF5X
 else ifdef REDBEARDUO
 ifdef RBLINK
 	@echo "Using the RBLink to flash"
-	openocd -d1 -s /usr/local/share/openocd/scripts -f $(ROOT)/targetlibs/duo/openocd/redbearduo.cfg -c "program $(PROJ_NAME).bin verify reset exit 0x80c0000"
+	openocd -f $(ROOT)/targetlibs/duo/openocd/redbearduo.cfg -c "program $(PROJ_NAME).bin verify reset exit 0x80c0000"
 else
 	$(SUDO) dfu-util -d 2b04:d058 -a 0 -s 0x080C0000:leave -D $(PROJ_NAME).bin
 endif
