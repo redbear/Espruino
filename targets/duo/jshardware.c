@@ -36,8 +36,8 @@ void jshInit() {
   jshInitDevices();
 
   // turn on WiFi and connect to the AP stored
-  wifi_on();
-  wifi_connect();
+  //wifi_on();
+  //wifi_connect();
   
   // start a tcp server with port number
   server = TCPServer_newTCPServer(TCPPORT);
