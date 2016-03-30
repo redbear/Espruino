@@ -11,6 +11,7 @@
 #include "tcpclient_api.h"
 #include "wifi_api.h"
 #include "gpio_api.h"
+#include "ticks_api.h"
 
 #ifdef __cplusplus
 extern "C" {

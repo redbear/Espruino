@@ -128,7 +128,7 @@ void jshInterruptOn() {
 }
 
 void jshDelayMicroseconds(int microsec) {
-  // wait_us(microsec);
+  delayMicroseconds(microsec);
 }
 
 void jshPinSetState(Pin pin, JshPinState state) {
