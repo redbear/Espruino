@@ -4,6 +4,7 @@
 #include "jshardware.h"
 #include "jsinteractive.h"
 
+#include "platforms.h"
 #include "usbserial_api.h"
 #include "usartserial_api.h"
 #include "tcpserver_api.h"
