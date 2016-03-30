@@ -137,6 +137,24 @@ void jshPinSetState(Pin pin, JshPinState state) {
   pinMode(_pin, _mode);
 }
 
+JsVarFloat jshPinAnalog(Pin pin) {
+  uint16_t _pin = jspin_to_hal(pin);
+  JsVarFloat value = (JsVarFloat)analogRead(_pin)/4095;
+  return value;
+}
+
+JshPinFunction jshPinAnalogOutput(Pin pin, JsVarFloat value, JsVarFloat freq, JshAnalogOutputFlags flags) { // if freq<=0, the default is used
+  uint16_t _pin = jspin_to_hal(pin);
+  if(_pin==D10 || _pin==D11) {  //DAC pins
+	  wiring_analogWrite(_pin, value*4095);
+  }
+  else {  // PWM pins
+    pinMode(_pin, OUTPUT);
+    wiring_analogWrite(_pin, value*255);
+  }
+  return JSH_NOTHING;
+}
+
 void jshPinSetValue(Pin pin, bool value) {
   uint16_t _pin = jspin_to_hal(pin);
   pinMode(_pin, OUTPUT);
@@ -150,8 +168,7 @@ bool jshPinGetValue(Pin pin) {
 }
 
 bool jshIsPinValid(Pin pin) {
-  //return pin>=0 && pin<MBED_PINS;
-  return false;
+  return (pin<JSH_PIN_COUNT && 0xFF!=jspin_to_hal(pin));
 }
 
 bool jshIsDeviceInitialised(IOEventFlags device) { return true; }
@@ -186,15 +203,6 @@ void jshSetSystemTime(JsSysTime time) {
 }
 
 // ----------------------------------------------------------------------------
-
-JsVarFloat jshPinAnalog(Pin pin) {
-  JsVarFloat value = 0;
-  return value;
-}
-
-JshPinFunction jshPinAnalogOutput(Pin pin, JsVarFloat value, JsVarFloat freq, JshAnalogOutputFlags flags) { // if freq<=0, the default is used
-  return JSH_NOTHING;
-}
 
 void jshPinPulse(Pin pin, bool value, JsVarFloat time) {
 }
