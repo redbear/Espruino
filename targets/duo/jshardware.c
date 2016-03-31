@@ -178,25 +178,15 @@ bool jshIsUSBSERIALConnected() {
 }
 
 JsSysTime jshGetTimeFromMilliseconds(JsVarFloat ms) {
-  return (JsSysTime)(ms*1000);
+  return (JsSysTime)ms;
 }
 
 JsVarFloat jshGetMillisecondsFromTime(JsSysTime time) {
-  return ((JsVarFloat)time)/1000;
+  return (JsVarFloat)time;
 }
 
-
 JsSysTime jshGetSystemTime() {
-  // Check for timer overflows
-  unsigned int t = 0;//systemTime.read_us();
-  /*bool high = t>>31;
-  if (high != systemTimeWasHigh) {
-    if (!high) systemTimeHigh++;
-    systemTimeWasHigh = high;    
-  } */
-  // FIXME - time after 30 minutes!
-  
-  return ((JsSysTime)t);// + ((JsSysTime)systemTimeHigh)<<32;
+  return ((JsSysTime)millis());
 }
 
 void jshSetSystemTime(JsSysTime time) {
