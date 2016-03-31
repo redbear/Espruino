@@ -1444,7 +1444,8 @@ CPPSOURCES +=                              \
   targetlibs/duo/wiring_api/rgb_api.cpp \
   targetlibs/duo/wiring_api/wifi_api.cpp \
   targetlibs/duo/wiring_api/tcpserver_api.cpp \
-  targetlibs/duo/wiring_api/tcpclient_api.cpp
+  targetlibs/duo/wiring_api/tcpclient_api.cpp \
+  targetlibs/duo/wiring_api/timer_api.cpp
 
 SOURCES += \
   targetlibs/duo/I_modules/duo/user-part/src/module_info.c \
