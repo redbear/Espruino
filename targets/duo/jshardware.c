@@ -20,6 +20,7 @@
 #include "jsutils.h"
 #include "jsparse.h"
 #include "jsinteractive.h"
+#include "jstimer.h"
 
 #include "wiring.h"
 
@@ -121,6 +122,73 @@ int jshGetSerialNumber(unsigned char *data, int maxChars) {
 
 // ----------------------------------------------------------------------------
 
+TIM_TypeDef* getTimerFromPinFunction(JshPinFunction device) {
+  switch (device&JSH_MASK_TYPE) {
+    case JSH_TIMER1:
+      return TIM1;
+    case JSH_TIMER2:
+      return TIM2;
+    case JSH_TIMER3:
+      return TIM3;
+    case JSH_TIMER4:
+      return TIM4;
+#ifndef STM32F3
+    case JSH_TIMER5:
+      return TIM5;
+#endif
+#ifdef TIM6
+    case JSH_TIMER6: // Not used for outputs
+      return TIM6;
+#endif
+#ifdef TIM7
+    case JSH_TIMER7:
+      return TIM7;
+#endif
+#ifdef TIM8
+    case JSH_TIMER8:
+      return TIM8;
+#endif
+#ifdef TIM9
+    case JSH_TIMER9:
+      return TIM9;
+#endif
+#ifdef TIM10
+    case JSH_TIMER10:
+      return TIM10;
+#endif
+#ifdef TIM11
+    case JSH_TIMER11:
+      return TIM11;
+#endif
+#ifdef TIM12
+    case JSH_TIMER12:
+      return TIM12;
+#endif
+#ifdef TIM13
+    case JSH_TIMER13:
+      return TIM13;
+#endif
+#ifdef TIM14
+    case JSH_TIMER14:
+      return TIM14;
+#endif
+#ifdef TIM15
+    case JSH_TIMER15:
+      return TIM15;
+#endif
+#ifdef TIM16
+    case JSH_TIMER16:
+      return TIM16;
+#endif
+#ifdef TIM17
+    case JSH_TIMER17:
+      return TIM17;
+#endif
+
+  }
+  return 0;
+}
+
 void jshInterruptOff() {
 }
 
@@ -143,6 +211,10 @@ JsVarFloat jshPinAnalog(Pin pin) {
   return value;
 }
 
+int jshPinAnalogFast(Pin pin) {
+  return jshPinAnalog(pin);
+}
+
 JshPinFunction jshPinAnalogOutput(Pin pin, JsVarFloat value, JsVarFloat freq, JshAnalogOutputFlags flags) { // if freq<=0, the default is used
   uint16_t _pin = jspin_to_hal(pin);
   if(_pin==D10 || _pin==D11) {  //DAC pins
@@ -153,6 +225,31 @@ JshPinFunction jshPinAnalogOutput(Pin pin, JsVarFloat value, JsVarFloat freq, Js
     wiring_analogWrite(_pin, value*255);
   }
   return JSH_NOTHING;
+}
+
+void jshSetOutputValue(JshPinFunction func, int value) {
+  if (JSH_PINFUNCTION_IS_DAC(func)) {
+    uint16_t dacVal = (uint16_t)value;
+    switch (func & JSH_MASK_INFO) {
+      case JSH_DAC_CH1:  wiring_analogWrite(D10, value); break;
+      case JSH_DAC_CH2:  wiring_analogWrite(D11, value); break;
+    }
+  }
+  else if (JSH_PINFUNCTION_IS_TIMER(func)) {
+    TIM_TypeDef* TIMx = getTimerFromPinFunction(func);
+    if (TIMx) {
+      unsigned int period = (unsigned int)TIMx->ARR; // No getter available
+      uint16_t timerVal =  (uint16_t)(((unsigned int)value * period) >> 16);
+      switch (func & JSH_MASK_TIMER_CH) {
+      case JSH_TIMER_CH1:  TIM_SetCompare1(TIMx, timerVal); break;
+      case JSH_TIMER_CH2:  TIM_SetCompare2(TIMx, timerVal); break;
+      case JSH_TIMER_CH3:  TIM_SetCompare3(TIMx, timerVal); break;
+      case JSH_TIMER_CH4:  TIM_SetCompare4(TIMx, timerVal); break;
+      }
+    }
+  } else {
+    assert(0); // can't handle this yet...
+  }
 }
 
 void jshPinSetValue(Pin pin, bool value) {
@@ -267,13 +364,30 @@ bool jshSleep(JsSysTime timeUntilWake) {
    return true;
 }
 
-void jshUtilTimerDisable() {
+void* util_timer = NULL;
+
+void util_timer_IRQHandler(void) {
+  jstUtilTimerInterruptHandler();
+}
+
+void jshUtilTimerDisable(void) {
+  Timer_stop(util_timer);
+  Timer_deleteTimer(util_timer);
+  util_timer = NULL;
 }
 
 void jshUtilTimerReschedule(JsSysTime period) {
+  Timer_changePeriod(util_timer, period);
+  Timer_start(util_timer);
 }
 
 void jshUtilTimerStart(JsSysTime period) {
+  if(util_timer == NULL) {
+    util_timer = Timer_newTimer(period, util_timer_IRQHandler);
+    Timer_start(util_timer);
+  }
+  else
+    jshUtilTimerReschedule(period);
 }
 
 JsVarFloat jshReadTemperature() { return NAN; };

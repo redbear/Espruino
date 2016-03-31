@@ -12,6 +12,7 @@
 #include "wifi_api.h"
 #include "gpio_api.h"
 #include "ticks_api.h"
+#include "timer_api.h"
 
 #ifdef __cplusplus
 extern "C" {
