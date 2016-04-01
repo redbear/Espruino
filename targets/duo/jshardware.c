@@ -128,6 +128,11 @@ int jshGetSerialNumber(unsigned char *data, int maxChars) {
 
 // ----------------------------------------------------------------------------
 
+static ALWAYS_INLINE uint8_t pinToEVEXTI(Pin ipin) {
+  JsvPinInfoPin pin = pinInfo[ipin].pin;
+  return (uint8_t)(EV_EXTI0+(pin-JSH_PIN0));
+}
+
 TIM_TypeDef* getTimerFromPinFunction(JshPinFunction device) {
   switch (device&JSH_MASK_TYPE) {
     case JSH_TIMER1:
@@ -314,16 +319,15 @@ bool jshCanWatch(Pin pin) {
 
 IOEventFlags jshPinWatch(Pin pin, bool shouldWatch) {
   uint16_t _pin = jspin_to_hal(pin);
+  uint8_t pin_source = stmPinSource(pin);
   if (jshIsPinValid(pin)) {
     if (shouldWatch) {
-      // set as input
-      jshPinSetState(pin, JSHPINSTATE_GPIO_IN);
-
-      uint8_t pin_source = stmPinSource(pin);
+      if (!jshGetPinStateIsManual(pin)) jshPinSetState(pin, JSHPINSTATE_GPIO_IN);
       Interrupt_attachInterrupt(_pin, get_exti_isr(pin_source), CHANGE);
     }
-    watchedPins[pinInfo[pin].pin] = (Pin)(shouldWatch ? pin : PIN_UNDEFINED);
+    else Interrupt_detachInterrupt(_pin);
 
+    watchedPins[pinInfo[pin].pin] = (Pin)(shouldWatch ? pin : PIN_UNDEFINED);
     return shouldWatch ? (EV_EXTI0+pinInfo[pin].pin)  : EV_NONE;
   }
   else jsExceptionHere(JSET_ERROR, "Invalid pin!");
@@ -340,7 +344,7 @@ bool jshGetWatchedPinState(IOEventFlags device) {
 }
 
 bool jshIsEventForPin(IOEvent *event, Pin pin) {
-  return false;
+  return IOEVENTFLAGS_GETTYPE(event->flags) == pinToEVEXTI(pin);
 }
 
 void jshUSARTSetup(IOEventFlags device, JshUSARTInfo *inf) {
