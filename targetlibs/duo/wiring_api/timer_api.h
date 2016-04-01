@@ -7,12 +7,17 @@ extern "C" {
 
 typedef void (*timer_callback_t)(void);
 
-void* Timer_newTimer(unsigned int period, timer_callback_t callback);
-void Timer_deleteTimer(void *timer);
-void Timer_start(void *timer);
-void Timer_stop(void *timer);
-void Timer_reset(void *timer);
-void Timer_changePeriod(void *timer, unsigned int period);
+void* OSTimer_newTimer(unsigned int period, timer_callback_t callback);
+void OSTimer_deleteTimer(void *timer);
+void OSTimer_start(void *timer);
+void OSTimer_startFromISR(void *timer);
+void OSTimer_stop(void *timer);
+void OSTimer_stopFromISR(void *timer);
+void OSTimer_reset(void *timer);
+void OSTimer_resetFromISR(void *timer);
+void OSTimer_changePeriod(void *timer, unsigned int period);
+void OSTimer_changePeriodFromISR(void *timer, unsigned int period);
+bool OSTimer_isValid(void *timer);
 
 #ifdef __cplusplus
 }

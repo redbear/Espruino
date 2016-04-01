@@ -408,20 +408,21 @@ void util_timer_IRQHandler(void) {
 }
 
 void jshUtilTimerDisable(void) {
-  Timer_stop(util_timer);
-  Timer_deleteTimer(util_timer);
-  util_timer = NULL;
+  if(util_timer != NULL)
+    OSTimer_stop(util_timer);
 }
 
 void jshUtilTimerReschedule(JsSysTime period) {
-  Timer_changePeriod(util_timer, period);
-  Timer_start(util_timer);
+  if(util_timer != NULL) {
+    OSTimer_changePeriod(util_timer, period);
+    OSTimer_start(util_timer);
+  }
 }
 
 void jshUtilTimerStart(JsSysTime period) {
   if(util_timer == NULL) {
-    util_timer = Timer_newTimer(period, util_timer_IRQHandler);
-    Timer_start(util_timer);
+    util_timer = OSTimer_newTimer(period, util_timer_IRQHandler);
+    OSTimer_start(util_timer);
   }
   else
     jshUtilTimerReschedule(period);

@@ -7,35 +7,60 @@ extern "C" {
 #endif
 
 
-void* Timer_newTimer(unsigned int period, timer_callback_t callback)
+void* OSTimer_newTimer(unsigned int period, timer_callback_t callback)
 {
     Timer *_timer = new Timer(period, callback);
     return ((void *)_timer);
 }
 
-void Timer_deleteTimer(void *timer)
+void OSTimer_deleteTimer(void *timer)
 {
     delete ((Timer *)timer);
 }
 
-void Timer_start(void *timer)
+void OSTimer_start(void *timer)
 {
 	((Timer *)timer)->start();
 }
 
-void Timer_stop(void *timer)
+void OSTimer_startFromISR(void *timer)
+{
+	((Timer *)timer)->startFromISR();
+}
+
+void OSTimer_stop(void *timer)
 {
 	((Timer *)timer)->stop();
 }
 
-void Timer_reset(void *timer)
+void OSTimer_stopFromISR(void *timer)
+{
+	((Timer *)timer)->stopFromISR();
+}
+
+void OSTimer_reset(void *timer)
 {
 	((Timer *)timer)->reset();
 }
 
-void Timer_changePeriod(void *timer, unsigned int period)
+void OSTimer_resetFromISR(void *timer)
+{
+	((Timer *)timer)->resetFromISR();
+}
+
+void OSTimer_changePeriod(void *timer, unsigned int period)
 {
 	((Timer *)timer)->changePeriod(period);
+}
+
+void OSTimer_changePeriodFromISR(void *timer, unsigned int period)
+{
+	((Timer *)timer)->changePeriodFromISR(period);
+}
+
+bool OSTimer_isValid(void *timer)
+{
+    return ((Timer *)timer)->isValid();
 }
 
 
