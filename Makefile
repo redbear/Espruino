@@ -1453,7 +1453,8 @@ SOURCES += \
   targetlibs/duo/I_modules/duo/user-part/src/user_export.c \
   targetlibs/duo/I_modules/duo/user-part/src/user_module.c \
   targets/duo/jshardware.c \
-  targets/duo/wiring.c 
+  targets/duo/wiring.c \
+  targets/duo/interrupts.c 
 
 LINKER_FILE = $(ROOT)/targetlibs/duo/linker_scripts/gcc/linker.ld
 

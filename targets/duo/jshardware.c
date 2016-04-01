@@ -23,18 +23,24 @@
 #include "jstimer.h"
 
 #include "wiring.h"
+#include "interrupts.h"
 
-//Timer systemTime;
-unsigned int systemTimeHigh;
-bool systemTimeWasHigh;
 
 static tcp_server *server = NULL;
 static tcp_client *client = NULL;
+
+// see jshPinWatch/jshGetWatchedPinState
+Pin watchedPins[16];
 
 // ----------------------------------------------------------------------------
 // for non-blocking IO
 void jshInit() {
   jshInitDevices();
+  
+  int i;
+  // reset some vars
+  for (i=0;i<16;i++)
+    watchedPins[i] = PIN_UNDEFINED;
 
   // turn on WiFi and connect to the AP stored
   //wifi_on();
@@ -121,6 +127,78 @@ int jshGetSerialNumber(unsigned char *data, int maxChars) {
 }
 
 // ----------------------------------------------------------------------------
+
+TIM_TypeDef* getTimerFromPinFunction(JshPinFunction device) {
+  switch (device&JSH_MASK_TYPE) {
+    case JSH_TIMER1:
+      return TIM1;
+    case JSH_TIMER2:
+      return TIM2;
+    case JSH_TIMER3:
+      return TIM3;
+    case JSH_TIMER4:
+      return TIM4;
+#ifndef STM32F3
+    case JSH_TIMER5:
+      return TIM5;
+#endif
+#ifdef TIM6
+    case JSH_TIMER6: // Not used for outputs
+      return TIM6;
+#endif
+#ifdef TIM7
+    case JSH_TIMER7:
+      return TIM7;
+#endif
+#ifdef TIM8
+    case JSH_TIMER8:
+      return TIM8;
+#endif
+#ifdef TIM9
+    case JSH_TIMER9:
+      return TIM9;
+#endif
+#ifdef TIM10
+    case JSH_TIMER10:
+      return TIM10;
+#endif
+#ifdef TIM11
+    case JSH_TIMER11:
+      return TIM11;
+#endif
+#ifdef TIM12
+    case JSH_TIMER12:
+      return TIM12;
+#endif
+#ifdef TIM13
+    case JSH_TIMER13:
+      return TIM13;
+#endif
+#ifdef TIM14
+    case JSH_TIMER14:
+      return TIM14;
+#endif
+#ifdef TIM15
+    case JSH_TIMER15:
+      return TIM15;
+#endif
+#ifdef TIM16
+    case JSH_TIMER16:
+      return TIM16;
+#endif
+#ifdef TIM17
+    case JSH_TIMER17:
+      return TIM17;
+#endif
+
+  }
+  return 0;
+}
+
+static ALWAYS_INLINE uint8_t stmPinSource(JsvPinInfoPin ipin) {
+  JsvPinInfoPin pin = pinInfo[ipin].pin;
+  return (uint8_t)(pin-JSH_PIN0);
+}
 
 TIM_TypeDef* getTimerFromPinFunction(JshPinFunction device) {
   switch (device&JSH_MASK_TYPE) {
@@ -294,11 +372,37 @@ void jshSetSystemTime(JsSysTime time) {
 void jshPinPulse(Pin pin, bool value, JsVarFloat time) {
 }
 
+bool jshCanWatch(Pin pin) {
+  if (jshIsPinValid(pin)) {
+    return watchedPins[pinInfo[pin].pin]==PIN_UNDEFINED;
+  } else
+    return false;
+}
+
 IOEventFlags jshPinWatch(Pin pin, bool shouldWatch) {
+  uint16_t _pin = jspin_to_hal(pin);
+  if (jshIsPinValid(pin)) {
+    if (shouldWatch) {
+      // set as input
+      jshPinSetState(pin, JSHPINSTATE_GPIO_IN);
+
+      uint8_t pin_source = stmPinSource(pin);
+      Interrupt_attachInterrupt(_pin, get_exti_isr(pin_source), CHANGE);
+    }
+    watchedPins[pinInfo[pin].pin] = (Pin)(shouldWatch ? pin : PIN_UNDEFINED);
+
+    return shouldWatch ? (EV_EXTI0+pinInfo[pin].pin)  : EV_NONE;
+  }
+  else jsExceptionHere(JSET_ERROR, "Invalid pin!");
+
   return EV_NONE;
 }
 
 bool jshGetWatchedPinState(IOEventFlags device) {
+  int exti = IOEVENTFLAGS_GETTYPE(device) - EV_EXTI0;
+  Pin pin = watchedPins[exti];
+  if (jshIsPinValid(pin))
+    return jshPinGetValue(pin);
   return false;
 }
 
@@ -425,11 +529,6 @@ JshPinState jshPinGetState(Pin pin)
 {
     JshPinState j;
 	return j;
-}
-
-bool jshCanWatch(Pin pin)
-{
-	return false;
 }
 
 void jshSPIWait(
