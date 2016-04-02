@@ -436,17 +436,98 @@ JsVarFloat jshReadTemperature() { return NAN; };
 JsVarFloat jshReadVRef()  { return NAN; };
 unsigned int jshGetRandomNumber() { return rand(); }
 
+int jshFlashGetSector(uint32_t addr) {
+  if (addr >= FLASH_TOTAL+FLASH_START) return -1;
+  if (addr < FLASH_START) return -1;
+
+  addr -= FLASH_START;
+
+  if (addr<16*1024) return FLASH_Sector_0;
+  else if (addr<32*1024) return FLASH_Sector_1;
+  else if (addr<48*1024) return FLASH_Sector_2;
+  else if (addr<64*1024) return FLASH_Sector_3;
+  else if (addr<128*1024) return FLASH_Sector_4;
+  else if (addr<256*1024) return FLASH_Sector_5;
+  else if (addr<384*1024) return FLASH_Sector_6;
+  else if (addr<512*1024) return FLASH_Sector_7;
+  else if (addr<640*1024) return FLASH_Sector_8;
+  else if (addr<768*1024) return FLASH_Sector_9;
+  else if (addr<896*1024) return FLASH_Sector_10;
+  else if (addr<1024*1024) return FLASH_Sector_11;
+  assert(0);
+  return -1;
+}
+
+uint32_t jshFlashGetSectorAddr(int sector) {
+  sector /= FLASH_Sector_1; // make an actual int
+  if (sector <= 4) return FLASH_START + 16*1024*(uint32_t)sector;
+  return FLASH_START + 128*1024*(uint32_t)(sector-4);
+}
+
 bool jshFlashGetPage(uint32_t addr, uint32_t *startAddr, uint32_t *pageSize) {
-  return false;
+  int sector = jshFlashGetSector(addr);
+  if (sector<0) return false;
+  if (startAddr) *startAddr = jshFlashGetSectorAddr(sector);
+  if (pageSize) *pageSize = jshFlashGetSectorAddr(sector+FLASH_Sector_1)-jshFlashGetSectorAddr(sector);
+  return true;
+}
+
+static void addFlashArea(JsVar *jsFreeFlash, uint32_t addr, uint32_t length) {
+  JsVar *jsArea = jsvNewObject();
+  if (!jsArea) return;
+  jsvObjectSetChildAndUnLock(jsArea, "addr", jsvNewFromInteger((JsVarInt)addr));
+  jsvObjectSetChildAndUnLock(jsArea, "length", jsvNewFromInteger((JsVarInt)length));
+  jsvArrayPushAndUnLock(jsFreeFlash, jsArea);
+}
+
+JsVar *jshFlashGetFree() {
+  JsVar *jsFreeFlash = jsvNewEmptyArray();
+  if (!jsFreeFlash) return 0;
+  // Try and find the page after the end of firmware
+  extern int LINKER_ETEXT_VAR; // end of flash text (binary) section
+  uint32_t firmwareEnd = FLASH_START | (uint32_t)&LINKER_ETEXT_VAR;
+  uint32_t pAddr, pSize;
+  jshFlashGetPage(firmwareEnd, &pAddr, &pSize);
+  firmwareEnd = pAddr+pSize;
+
+  if (firmwareEnd < FLASH_SAVED_CODE_START)
+    addFlashArea(jsFreeFlash, firmwareEnd, FLASH_SAVED_CODE_START-firmwareEnd);
+
+  // Otherwise add undocumented memory: internal EEPROM flash 0x08010000
+  addFlashArea(jsFreeFlash, FLASH_START|(64*1024), 64*1024);
+
+  return jsFreeFlash;
 }
 
 void jshFlashErasePage(uint32_t addr) {
+  int sector = jshFlashGetSector(addr);
+  assert(sector>=0);
+  FLASH_Unlock();
+  // Clear All pending flags
+  FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR |
+                  FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR|FLASH_FLAG_PGSERR);
+  // Erase
+  FLASH_EraseSector((uint32_t)sector, VoltageRange_3);
+
+  FLASH_Lock();
 }
 
 void jshFlashRead(void *buf, uint32_t addr, uint32_t len) {
+  memcpy(buf, (void*)addr, len);
 }
 
 void jshFlashWrite(void *buf, uint32_t addr, uint32_t len) {
+  unsigned int i;
+
+  FLASH_Unlock();
+  FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR |
+                  FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR|FLASH_FLAG_PGSERR);
+
+  for (i=0; i<len; i+=4) {
+    while (FLASH_ProgramWord((uint32_t)(addr+i), ((uint32_t*)buf)[i>>2]) != FLASH_COMPLETE);
+  }
+
+  FLASH_Lock();
 }
 
 // Fake functions to make link stage walk through
@@ -456,11 +537,6 @@ void jshReset(void) {
 
 unsigned int jshSetSystemClock(JsVar *options) {
   return 0;
-}
-
-JsVar *jshFlashGetFree()
-{
-	return 0;
 }
 
 JshPinState jshPinGetState(Pin pin)
