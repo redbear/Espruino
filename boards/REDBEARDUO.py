@@ -31,7 +31,7 @@ chip = {
   'part' : "STM32F205RGT6",
   'family' : "STM32F2",
   'package' : "WLCSP64",
-  'ram' : 128,
+  'ram' : 60, # just a guess left for user part
   'flash' : 1024,
   'speed' : 120,
   'usart' : 2,
@@ -40,9 +40,9 @@ chip = {
   'adc' : 8,
   'dac' : 2,
   'saved_code' : {
-    'address' : 0x080E0000, # last page start address
+    'address' : 0x08010000, # internal EEPROM flash
     'page_size' : 131072, # size of pages
-    'pages' : 1, # number of pages we're using
+    'pages' : 0.5, # number of pages we're using
     'flash_available' : 256 # 256KB internal flash used for user part
   },
 };
