@@ -493,8 +493,8 @@ JsVar *jshFlashGetFree() {
   if (firmwareEnd < FLASH_SAVED_CODE_START)
     addFlashArea(jsFreeFlash, firmwareEnd, FLASH_SAVED_CODE_START-firmwareEnd);
 
-  // Otherwise add undocumented memory: internal EEPROM flash 0x08010000
-  addFlashArea(jsFreeFlash, FLASH_START|(64*1024), 64*1024);
+  // Otherwise add undocumented memory: internal EEPROM1 flash 0x0800c000
+  addFlashArea(jsFreeFlash, FLASH_START|(48*1024), 16*1024);
 
   return jsFreeFlash;
 }
