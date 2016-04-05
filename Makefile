@@ -564,6 +564,7 @@ FLASH_BAUD ?= 115200 # The flash baud rate
 else ifdef REDBEARDUO
 EMBEDDED=1
 BOARD=REDBEARDUO
+USE_BLUETOOTH=1
 
 else
 ifeq ($(shell uname -m),armv6l)
@@ -1013,7 +1014,11 @@ endif
 
 ifdef USE_BLUETOOTH
   INCLUDE += -I$(ROOT)/libs/bluetooth
+ifeq ($(BOARD),REDBEARDUO)
+  WRAPPERSOURCES += libs/bluetooth/jswrap_duo_bluetooth.c
+else
   WRAPPERSOURCES += libs/bluetooth/jswrap_bluetooth.c
+endif
 endif
 
 ifeq ($(BOARD),MICROBIT)
@@ -1502,6 +1507,8 @@ DEFINES += -DSTM32_DEVICE -DSTM32F2XX -DPLATFORM_THREADING=1 \
            -DMODULAR_FIRMWARE=1 -DMODULE_FUNCTION=5 -DMODULE_INDEX=1 -DMODULE_VERSION=6 -DMODULE_DEPENDENCY=4,2,6 \
            -DSPARK=1 \
            -DTCPPORT=28888
+		   
+DEFINES += -DBLUETOOTH
 
 ifdef RBLINK
     DEFINES += -DRBLINK
