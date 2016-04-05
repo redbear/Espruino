@@ -40,7 +40,7 @@ void ble_stopScanning(void);
 
 void ble_onScanReportCallback(void (*cb)(advertisementReport_t *advertisement_report));
 
-void ble_addSeble_addServiceUUID16rvice(uint16_t uuid);
+void ble_addServiceUUID16(uint16_t uuid);
 void ble_addServiceUUID128(uint8_t *uuid);
 
 uint16_t ble_addCharacteristicUUID16(uint16_t uuid, uint16_t flags, uint8_t *data, uint16_t data_len);
