@@ -21,7 +21,6 @@
 #include "jsparse.h"
 #include "jsinteractive.h"
 #include "jstimer.h"
-#include "jswrap_bluetooth.h"
 
 #include "wiring.h"
 #include "interrupts.h"
@@ -55,8 +54,6 @@ void jshInit() {
   // for both USB and serial 1 of the Duo
   usartserial1_begin(9600);
   usbserial_begin(9600);  
-  
-  jswrap_nrf_bluetooth_init();
 }
 
 void jshKill() {
