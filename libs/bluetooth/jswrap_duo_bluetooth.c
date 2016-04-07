@@ -9,7 +9,7 @@ of beta.  */
 
 #include "ble_api.h"
 
-#define DEVICE_NAME                "Duo JS Interpreter"
+#define DEVICE_NAME        "Duo JS Interpreter"
 
 #define CHAR_TX_MAX_LEN    20
 #define CHAR_RX_MAX_LEN    20
@@ -18,30 +18,54 @@ of beta.  */
 /******************************************************
  *               Variable Definitions
  ******************************************************/
-static uint8_t uart_service_uuid[16] = {0x71,0x3d,0x00,0x00,0x50,0x3e,0x4c,0x75,0xba,0x94,0x31,0x48,0xf1,0x8d,0x94,0x1e};
-static uint8_t uart_char_tx_uuid[16] = {0x71,0x3d,0x00,0x03,0x50,0x3e,0x4c,0x75,0xba,0x94,0x31,0x48,0xf1,0x8d,0x94,0x1e};
-static uint8_t uart_char_rx_uuid[16] = {0x71,0x3d,0x00,0x02,0x50,0x3e,0x4c,0x75,0xba,0x94,0x31,0x48,0xf1,0x8d,0x94,0x1e};
+static uint8_t uart_service_uuid[16] = {0x6E, 0x40, 0x00, 0x01, 0xB5, 0xA3, 0xF3, 0x93, 0xE0, 0xA9, 0xE5, 0x0E, 0x24, 0xDC, 0xCA, 0x9E};
+static uint8_t uart_char_tx_uuid[16] = {0x6E, 0x40, 0x00, 0x02, 0xB5, 0xA3, 0xF3, 0x93, 0xE0, 0xA9, 0xE5, 0x0E, 0x24, 0xDC, 0xCA, 0x9E};
+static uint8_t uart_char_rx_uuid[16] = {0x6E, 0x40, 0x00, 0x03, 0xB5, 0xA3, 0xF3, 0x93, 0xE0, 0xA9, 0xE5, 0x0E, 0x24, 0xDC, 0xCA, 0x9E};
 
-static uint8_t appearance[2] = {0x00, 0x02};
-static uint8_t change[2]     = {0x00, 0x00};
-static uint8_t conn_param[8] = {0x28, 0x00, 0x90, 0x01, 0x00, 0x00, 0x90, 0x01};
+static uint8_t appearance[2] = {
+  0x00, 0x02
+};
+
+static uint8_t change[2] = { // Service change
+  0x00, 0x00
+};
+
+static uint8_t conn_param[8] = {
+  0x10, 0x00,  // MIN connection interval: 20ms, step by 1.25ms
+  0x3C, 0x00,  // MAX connection interval: 20ms, step by 1.25ms
+  0x00, 0x00,  // Slave latency
+  0xA0, 0x0F   // Connection timeout: 4s, step by 100ms
+};
 
 static uint16_t char_tx_value_handle = 0x0000;
 static uint16_t char_rx_value_handle = 0x0000;
 static uint16_t connect_handle = 0xFFFF;
 
-static uint8_t char_rx_value[CHAR_TX_MAX_LEN];
-static uint8_t char_tx_value[CHAR_RX_MAX_LEN];
+static uint8_t char_tx_value[CHAR_TX_MAX_LEN];
+static uint8_t char_rx_value[CHAR_RX_MAX_LEN];
 
 static advParams_t adv_params;
-static uint8_t adv_data[] = {0x02,0x01,0x06,0x13,0x08,'D','u','o',' ','J','s',' ','I','n','t','e','r','p','r','e','t','e','r'};
+static uint8_t adv_data[] = {
+  // AD flags
+  0x02,
+  0x01,
+  0x06,
+  // Local Name
+  0x07,
+  0x08,
+  'D','u','o',' ','J','S',
+  // Service UUID
+  0x11,
+  0x07,
+  0x9E,0xCA,0xDC,0x24,0x0E,0xE5,0xA9,0xE0,0x93,0xF3,0xA3,0xB5,0x01,0x00,0x40,0x6E
+};
 
 static char rx_buf[TXRX_BUF_LEN];
 static uint8_t rx_buf_len;
 
 /**@snippet [Handling the data received over UART] */
 static bool  jswrap_duo_ble_transmit_string(void) {
-  if (connect_handle != 0xFFFF) {
+  if (connect_handle == 0xFFFF) {
 	// If no connection, drain the output buffer
 	while (jshGetCharToTransmit(EV_BLUETOOTH)>=0);
   }
@@ -49,12 +73,12 @@ static bool  jswrap_duo_ble_transmit_string(void) {
   rx_buf_len = 0;
   int ch = jshGetCharToTransmit(EV_BLUETOOTH);
   while (ch>=0) {
-	  rx_buf[rx_buf_len++] = ch;
+    rx_buf[rx_buf_len++] = ch;
 	if(rx_buf_len >= CHAR_RX_MAX_LEN) break;
 	ch = jshGetCharToTransmit(EV_BLUETOOTH);
   }
   if (rx_buf_len>0) {
-	  ble_sendNotify(char_tx_value_handle, (uint8_t*)rx_buf, CHAR_RX_MAX_LEN);
+    ble_sendNotify(char_rx_value_handle, (uint8_t*)rx_buf, rx_buf_len);
   }
 
   return rx_buf_len>0;
@@ -74,11 +98,12 @@ void jswrap_duo_ble_startAdvertise(void) {
 }
 
 static void deviceConnectedCallback(BLEStatus_t status, uint16_t handle) {
-  switch (status){
+  switch (status) {
     case BLE_STATUS_OK:
       connect_handle = handle;
       jsiSetConsoleDevice( EV_BLUETOOTH ); // Is it necessary?
       break;
+
     default:
       break;
   }
@@ -94,11 +119,10 @@ static void deviceDisconnectedCallback(uint16_t handle) {
 static int gattWriteCallback(uint16_t value_handle, uint8_t *buffer, uint16_t size) {
   uint32_t i;
 
-  if(char_rx_value_handle == value_handle) {
-    memcpy(char_rx_value, buffer, (size<CHAR_TX_MAX_LEN?size:CHAR_TX_MAX_LEN));
-
-    for (i = 0; i < size; i++) {
-      jshPushIOCharEvent(EV_BLUETOOTH, (char)char_rx_value[i]);
+  if(char_tx_value_handle == value_handle) {
+    memcpy(char_tx_value, buffer, (size<CHAR_TX_MAX_LEN ? size : CHAR_TX_MAX_LEN));
+    for (i=0; i<size; i++) {
+      jshPushIOCharEvent(EV_BLUETOOTH, (char)char_tx_value[i]);
     }
   }
   return 0;
@@ -134,8 +158,9 @@ static void gap_params_init(void) {
  */
 static void services_init(void) {
   ble_addServiceUUID128(uart_service_uuid);
-  char_rx_value_handle = ble_addCharacteristicDynamicUUID128(uart_char_tx_uuid, ATT_PROPERTY_WRITE_WITHOUT_RESPONSE, char_rx_value, CHAR_TX_MAX_LEN);
-  char_tx_value_handle = ble_addCharacteristicDynamicUUID128(uart_char_rx_uuid, ATT_PROPERTY_NOTIFY, char_tx_value, CHAR_RX_MAX_LEN);
+  // The order of adding characteristics matters a lot!
+  char_rx_value_handle = ble_addCharacteristicDynamicUUID128(uart_char_rx_uuid, ATT_PROPERTY_NOTIFY, char_rx_value, CHAR_RX_MAX_LEN);
+  char_tx_value_handle = ble_addCharacteristicDynamicUUID128(uart_char_tx_uuid, ATT_PROPERTY_WRITE_WITHOUT_RESPONSE|ATT_PROPERTY_WRITE, char_tx_value, CHAR_TX_MAX_LEN);
 }
 
 /**@brief Function for initializing the Advertising functionality.

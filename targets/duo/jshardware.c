@@ -353,16 +353,16 @@ void jshUSARTSetup(IOEventFlags device, JshUSARTInfo *inf) {
 /** Kick a device into action (if required). For instance we may need
  * to set up interrupts */
 void jshUSARTKick(IOEventFlags device) {
-  int id = 0; // TODO: device
-  int c = jshGetCharToTransmit(device);
+  if(device == EV_SERIAL1 || device == EV_SERIAL2) {
+    int c = jshGetCharToTransmit(device);
+    if (c >= 0) {
+      usartserial1_putc(c);
+      usbserial_putc(c);
 
-  if (c >= 0) {
-    usartserial1_putc(c);
-    usbserial_putc(c);
-
-    // if a tcp client connected, also sending out
-    if (client)
+      // if a tcp client connected, also sending out
+      if (client)
         TCPClient_write(client, &c, 1);
+    }
   }
 }
 
@@ -373,7 +373,7 @@ void jshSPISetup(IOEventFlags device, JshSPIInfo *inf) {
  * of the previous send (or -1). If data<0, no data is sent and the function
  * waits for data to be returned */
 int jshSPISend(IOEventFlags device, int data) {
-	return 0;
+  return 0;
 }
 
 /** Send 16 bit data through the given SPI device. */
