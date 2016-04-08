@@ -10,10 +10,6 @@
  *
  */
 
- /* DO_NOT_INCLUDE_IN_DOCS - this is a special token for common.py, 
-so we don't put this into espruino.com/Reference until this is out
-of beta.  */
-
 /** @file
  *
  * @defgroup ble_sdk_uart_over_ble_main main.c
@@ -90,6 +86,7 @@ typedef enum  {
 static volatile BLEStatus bleStatus;
 
 #define BLE_SCAN_EVENT                  JS_EVENT_PREFIX"blescan"
+#define BLE_WRITE_EVENT                 JS_EVENT_PREFIX"blew"
 
 /**@brief Error handlers.
  *
@@ -277,6 +274,12 @@ void jswrap_nrf_bluetooth_startAdvertise(void) {
   APP_ERROR_CHECK(err_code);
 }
 
+/// Get the correct event name for a BLE write event to a characteristic (eventName should be 12 chars long)
+void ble_handle_to_write_event_name(char *eventName, uint16_t handle) {
+  strcpy(eventName, BLE_WRITE_EVENT);
+  itostr(handle, &eventName[strlen(eventName)], 16);
+}
+
 /**@brief Function for the application's SoftDevice event handler.
  *
  * @param[in] p_ble_evt SoftDevice event.
@@ -338,7 +341,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
               p_adv->peer_addr.addr[0]));
           JsVar *data = jsvNewStringOfLength(p_adv->dlen);
           if (data) {
-            jsvSetString(data, p_adv->data, p_adv->dlen);
+            jsvSetString(data, (char*)p_adv->data, p_adv->dlen);
             JsVar *ab = jsvNewArrayBufferFromString(data, p_adv->dlen);
             jsvUnLock(data);
             jsvObjectSetChildAndUnLock(evt, "data", ab);
@@ -348,6 +351,26 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
         }
         break;
         }
+
+      case BLE_GATTS_EVT_WRITE: {
+        ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+        // We got a param write event - add this to the object callback queue
+        JsVar *evt = jsvNewObject();
+        if (evt) {
+          JsVar *data = jsvNewStringOfLength(p_evt_write->len);
+          if (data) {
+            jsvSetString(data, (char*)p_evt_write->data, p_evt_write->len);
+            JsVar *ab = jsvNewArrayBufferFromString(data, p_evt_write->len);
+            jsvUnLock(data);
+            jsvObjectSetChildAndUnLock(evt, "data", ab);
+          }
+          char eventName[12];
+          ble_handle_to_write_event_name(eventName, p_evt_write->handle);
+          jsiQueueObjectCallbacks(execInfo.root, eventName, &evt, 1);
+          jsvUnLock(evt);
+        }
+        break;
+      }
 
       default:
           // No implementation needed.
@@ -444,14 +467,18 @@ static void advertising_init(void)
 /*JSON{
     "type": "class",
     "class" : "NRF"
-}*/
+}
+The NRF class is for controlling functionality of the Nordic nRF51/nRF52 chips. Currently these are only used in the [BBC micro:bit](/MicroBit).
+
+The main part of this is control of Bluetooth Smart - both searching for devices, and changing advertising data.
+*/
 /*JSON{
   "type" : "object",
   "name" : "Bluetooth",
   "instanceof" : "Serial",
   "#ifdef" : "BLUETOOTH"
 }
-The USB Serial port
+The Bluetooth Serial port - used when data is sent or received over Bluetooth Smart on nRF51/nRF52 chips.
  */
 
 void jswrap_nrf_bluetooth_init(void) {
@@ -471,7 +498,9 @@ void jswrap_nrf_bluetooth_init(void) {
     "class" : "NRF",
     "name" : "sleep",
     "generate" : "jswrap_nrf_bluetooth_sleep"
-}*/
+}
+Disable Bluetooth communications
+*/
 void jswrap_nrf_bluetooth_sleep(void) {
   uint32_t err_code;
 
@@ -492,7 +521,9 @@ void jswrap_nrf_bluetooth_sleep(void) {
     "class" : "NRF",
     "name" : "wake",
     "generate" : "jswrap_nrf_bluetooth_wake"
-}*/
+}
+Enable Bluetooth communications (they are enabled by default)
+*/
 void jswrap_nrf_bluetooth_wake(void) {
   NRF_RADIO->TASKS_DISABLE = (0UL);
   jswrap_nrf_bluetooth_startAdvertise();
@@ -545,8 +576,11 @@ JsVarFloat jswrap_nrf_bluetooth_getBattery(void) {
       ["data","JsVar","The data to advertise as an object - see below for more info"]
     ]
 }
+Change the data that Espruino advertises.
 
-Data is of the form `{ UUID : data_as_byte_array }`. For example to return battery level at 95%, do:
+Data is of the form `{ UUID : data_as_byte_array }`. The UUID should be a [Bluetooth Service ID](https://developer.bluetooth.org/gatt/services/Pages/ServicesHome.aspx).
+
+For example to return battery level at 95%, do:
 
 ```
 NRF.setAdvertising({
@@ -559,7 +593,7 @@ Or you could report the current temperature:
 ```
 setInterval(function() {
   NRF.setAdvertising({
-    0x1809 : [0|E.getTemperature()]
+    0x1809 : [Math,round(E.getTemperature())]
   });
 }, 30000);
 ```
@@ -597,6 +631,171 @@ void jswrap_nrf_bluetooth_setAdvertising(JsVar *data) {
     jsExceptionHere(JSET_ERROR, "Got BLE error code %d", err_code);
 }
 
+
+/*JSON{
+    "type" : "staticmethod",
+    "class" : "NRF",
+    "name" : "setServices",
+    "generate" : "jswrap_nrf_bluetooth_setServices",
+    "params" : [
+      ["data","JsVar","The service (and characteristics) to advertise"]
+    ]
+}
+BETA: This only partially works at the moment
+
+Change the services and characteristics Espruino advertises.
+
+```
+NRF.setServices({
+  0xBCDE : {
+    0xABCD : {
+      value : "Hello", // optional
+      maxLen : 5, // optional (otherwise is length of initial value)
+      broadcast : false, // optional, default is false
+      readable : true,   // optional, default is false
+      writable : true,   // optional, default is false
+      onWrite : function(evt) { // optional
+        console.log("Got ", evt.data);
+      }
+    }
+    // more characteristics allowed
+  }
+  // more services allowed
+});
+```
+*/
+void jswrap_nrf_bluetooth_setServices(JsVar *data) {
+  uint32_t err_code;
+
+  // TODO: Reset services
+
+  if (jsvIsObject(data)) {
+    JsvObjectIterator it;
+    jsvObjectIteratorNew(&it, data);
+    while (jsvObjectIteratorHasValue(&it)) {
+      ble_uuid_t ble_uuid;
+      uint16_t service_handle;
+
+      // Add the service
+      BLE_UUID_BLE_ASSIGN(ble_uuid, jsvGetIntegerAndUnLock(jsvObjectIteratorGetKey(&it)));
+      err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY,
+                                              &ble_uuid,
+                                              &service_handle);
+      if (err_code) {
+        jsExceptionHere(JSET_ERROR, "Got BLE error code %d in gatts_service_add", err_code);
+        break;
+      }
+      // sd_ble_gatts_include_add ?
+
+      // Now add characteristics
+      JsVar *serviceVar = jsvObjectIteratorGetValue(&it);
+      JsvObjectIterator serviceit;
+      jsvObjectIteratorNew(&serviceit, serviceVar);
+      while (jsvObjectIteratorHasValue(&serviceit)) {
+        ble_uuid_t          char_uuid;
+        ble_gatts_char_md_t char_md;
+        ble_gatts_attr_t    attr_char_value;
+        ble_gatts_attr_md_t attr_md;
+        ble_gatts_char_handles_t  characteristic_handles;
+
+        BLE_UUID_BLE_ASSIGN(char_uuid, jsvGetIntegerAndUnLock(jsvObjectIteratorGetKey(&serviceit)));
+        JsVar *charVar = jsvObjectIteratorGetValue(&serviceit);
+
+        memset(&char_md, 0, sizeof(char_md));
+        if (jsvGetBoolAndUnLock(jsvObjectGetChild(charVar, "broadcast", 0)))
+          char_md.char_props.broadcast = 1;
+        if (jsvGetBoolAndUnLock(jsvObjectGetChild(charVar, "readable", 0)))
+          char_md.char_props.read = 1;
+        if (jsvGetBoolAndUnLock(jsvObjectGetChild(charVar, "writable", 0))) {
+          char_md.char_props.write = 1;
+          char_md.char_props.write_wo_resp = 1;
+        }
+        char_md.p_char_user_desc         = NULL;
+        char_md.p_char_pf                = NULL;
+        char_md.p_user_desc_md           = NULL;
+        char_md.p_cccd_md                = NULL;
+        char_md.p_sccd_md                = NULL;
+
+        memset(&attr_md, 0, sizeof(attr_md));
+        BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
+        BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
+        attr_md.vloc       = BLE_GATTS_VLOC_STACK;
+        attr_md.rd_auth    = 0;
+        attr_md.wr_auth    = 0;
+        attr_md.vlen       = 1; // TODO: variable length?
+
+        memset(&attr_char_value, 0, sizeof(attr_char_value));
+        attr_char_value.p_uuid       = &char_uuid;
+        attr_char_value.p_attr_md    = &attr_md;
+        attr_char_value.init_len     = 0;
+        attr_char_value.init_offs    = 0;
+        attr_char_value.p_value      = 0;
+        attr_char_value.max_len      = (uint16_t)jsvGetIntegerAndUnLock(jsvObjectGetChild(charVar, "maxLen", 0));
+        if (attr_char_value.max_len==0) attr_char_value.max_len=1;
+
+        // get initial data
+        JsVar *charValue = jsvObjectGetChild(charVar, "value", 0);
+        if (charValue) {
+          JSV_GET_AS_CHAR_ARRAY(vPtr, vLen, charValue);
+          if (vPtr && vLen) {
+            attr_char_value.p_value = (uint8_t*)vPtr;
+            attr_char_value.init_len = vLen;
+            if (attr_char_value.init_len > attr_char_value.max_len)
+              attr_char_value.max_len = attr_char_value.init_len;
+          }
+        }
+
+        err_code = sd_ble_gatts_characteristic_add(service_handle,
+                                                   &char_md,
+                                                   &attr_char_value,
+                                                   &characteristic_handles);
+
+        jsvUnLock(charValue); // unlock here in case we were storing data in a flat string
+        if (err_code) {
+          jsExceptionHere(JSET_ERROR, "Got BLE error code %d in gatts_characteristic_add", err_code);
+          break;
+        }
+
+        // Add Write callback
+        JsVar *writeCb = jsvObjectGetChild(charVar, "onWrite", 0);
+        if (writeCb) {
+          char eventName[12];
+          ble_handle_to_write_event_name(eventName, characteristic_handles.value_handle);
+          jsvObjectSetChildAndUnLock(execInfo.root, eventName, writeCb);
+        }
+
+        jsvUnLock(charVar);
+        /* We'd update the characteristic with:
+
+    memset(&hvx_params, 0, sizeof(hvx_params));
+    hvx_params.handle = characteristic_handle.value_handle;
+    hvx_params.p_data = p_string;
+    hvx_params.p_len  = &length;
+    hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
+    return sd_ble_gatts_hvx(p_nus->conn_handle, &hvx_params);
+
+    Maybe we could find the handle out based on characteristic UUID, rather than having
+    to store it?
+
+    */
+
+        jsvObjectIteratorNext(&serviceit);
+      }
+      jsvObjectIteratorFree(&serviceit);
+      jsvUnLock(serviceVar);
+
+      jsvObjectIteratorNext(&it);
+    }
+    jsvObjectIteratorFree(&it);
+
+
+
+    } else if (!jsvIsUndefined(data)) {
+      jsExceptionHere(JSET_TYPEERROR, "Expecting object or undefined, got %t", data);
+    }
+}
+
+
 /*JSON{
     "type" : "staticmethod",
     "class" : "NRF",
@@ -607,7 +806,7 @@ void jswrap_nrf_bluetooth_setAdvertising(JsVar *data) {
     ]
 }
 
-Start/stop listening for BLE advertising packets within range...
+Start/stop listening for BLE advertising packets within range.
 
 ```
 // Start scanning

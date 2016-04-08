@@ -195,7 +195,7 @@ void jswrap_microbit_show(JsVar *image) {
       jsvIteratorNext(&it);
     }
     jsvIteratorFree(&it);
-  } else if (jsvIsInt(image)) {
+  } else if (jsvIsNumeric(image)) {
     newState = jsvGetInteger(image);
   } else {
     jsError("Expecting a number, got %t\n", image);
@@ -205,7 +205,7 @@ void jswrap_microbit_show(JsVar *image) {
 
   if ((newState!=0) && (microbitLEDState==0)) {
     // we want to display something but we don't have an interval
-    jstExecuteFn(jswrap_microbit_display_callback, jshGetTimeFromMilliseconds(5));
+    jstExecuteFn(jswrap_microbit_display_callback, jshGetTimeFromMilliseconds(5), true /* repeat */);
     // and also set pins to outputs
     nrf_gpio_cfg_output(MB_LED_COL1);
     nrf_gpio_cfg_output(MB_LED_COL2);

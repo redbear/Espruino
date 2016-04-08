@@ -429,4 +429,30 @@ void jswrap_ESP8266_neopixelWrite(Pin pin, JsVar *jsArrayOfData) {
 #endif
 }
 
+//===== ESP8266.deepSleep
+/*JSON{
+  "type"     : "staticmethod",
+  "class"    : "ESP8266",
+  "name"     : "deepSleep",
+  "generate" : "jswrap_ESP8266_deepSleep",
+  "params"   : [
+    ["micros", "JsVar", "Number of microseconds to sleep."]
+  ]
+}
+Put the ESP8266 into 'deep sleep' for the given number of microseconds,
+reducing power consumption drastically.
+
+**Note:** unlike normal Espruino boards' 'deep sleep' mode, ESP8266
+deep sleep actually turns off the processor. After the given number of
+microseconds have elapsed, the ESP8266 will restart as if power had been
+turned off and then back on. *All contents of RAM will be lost*.
+*/
+void   jswrap_ESP8266_deepSleep(JsVar *jsMicros) {
+  if (!jsvIsInt(jsMicros)) {
+    jsExceptionHere(JSET_ERROR, "Invalid microseconds.");
+    return;
+  }
+  int sleepTime = jsvGetInteger(jsMicros);
+  system_deep_sleep(sleepTime);
+}
 
