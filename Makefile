@@ -566,6 +566,8 @@ else ifdef REDBEARDUO
 EMBEDDED=1
 BOARD=REDBEARDUO
 USE_BLUETOOTH=1
+USE_NET=1
+USE_TELNET=1
 
 else
 ifeq ($(shell uname -m),armv6l)
@@ -688,6 +690,8 @@ else ifeq ($(FAMILY),ESP8266)
 USE_ESP8266=1
 else ifdef EMW3165
 USE_WICED=1
+else ifdef REDBEARDUO
+USE_DUO=1
 else
 USE_CC3000=1
 endif
@@ -974,6 +978,13 @@ ifdef USE_NET
  libs/network/esp8266/network_esp8266.c\
  libs/network/esp8266/pktbuf.c\
  libs/network/esp8266/ota.c
+ endif
+ 
+ ifdef USE_DUO
+ DEFINES += -DUSE_DUO
+ WRAPPERSOURCES += libs/network/duo/jswrap_duo_network.c
+ INCLUDE += -I$(ROOT)/libs/network/duo
+ SOURCES += libs/network/duo/network_duo.c
  endif
 
  ifdef USE_TELNET
