@@ -89,6 +89,38 @@ void jswrap_duo_wifi_connect(void) {
 /*JSON{
   "type"     : "staticmethod",
   "class"    : "WiFi",
+  "name"     : "isReady",
+  "generate" : "jswrap_duo_wifi_isReady",
+  "return"   : ["JsVar", "An boolean representing the WiFi connection state to an AP."],
+  "params"   : [
+    ["callback", "JsVar", "An optional function to be called back with the WiFi connection state, i.e. the same object as returned directly. The callback function is more portable than the direct return value."]
+  ]
+}
+*/
+JsVar *jswrap_duo_wifi_isReady(JsVar *jsCallback) {
+  // Check callback
+  if (jsCallback != NULL && !jsvIsNull(jsCallback) && !jsvIsFunction(jsCallback)) {
+    jsExceptionHere(JSET_ERROR, "jsCallback is not an function");
+    return NULL;
+  }
+
+  bool state = wifi_isReady();
+
+  JsVar *jsConnState = jsvNewFromBool(state);
+
+  // Schedule callback if a function was provided
+  if (jsvIsFunction(jsCallback)) {
+    JsVar *params[1];
+    params[0] = jsConnState;
+    jsiQueueEvents(NULL, jsCallback, params, 1);
+  }
+
+  return jsConnState;
+}
+
+/*JSON{
+  "type"     : "staticmethod",
+  "class"    : "WiFi",
   "name"     : "setCredential",
   "generate" : "jswrap_duo_wifi_setCredential",
   "params"   : [
@@ -107,7 +139,7 @@ void jswrap_duo_wifi_setCredential(JsVar *jsCredential) {
   if(!wifi_actived)
     jsExceptionHere(JSET_ERROR, "WiFi is disabled. Use WiFi.on() to enable WiFi first.");
 
-  // Make sure jsSetings an object
+  // Make sure jsCredential an object
   if(!jsvIsObject(jsCredential)) {
     jsExceptionHere(JSET_ERROR, "jsCredential is not an object");
 	return;
@@ -169,6 +201,77 @@ void jswrap_duo_wifi_setCredential(JsVar *jsCredential) {
 /*JSON{
   "type"     : "staticmethod",
   "class"    : "WiFi",
+  "name"     : "getCredentials",
+  "generate" : "jswrap_duo_wifi_getCredentials",
+  "return"   : ["JsVar", "An object representing the stored WiFi credentials."],
+  "params"   : [
+    ["callback", "JsVar", "An optional function to be called back with the stored WiFi credentials, i.e. the same object as returned directly. The callback function is more portable than the direct return value."]
+  ]
+}
+*/
+JsVar *jswrap_duo_wifi_getCredentials(JsVar *jsCallback) {
+  WiFiAccessPoint storedCredentials[5];
+  uint8_t i;
+
+  // Check callback
+  if (jsCallback != NULL && !jsvIsNull(jsCallback) && !jsvIsFunction(jsCallback)) {
+    jsExceptionHere(JSET_ERROR, "jsCallback is not an function");
+    return NULL;
+  }
+
+  if(!wifi_hasCredentials()) {
+    jsExceptionHere(JSET_ERROR, "No WiFi credentials stored in Duo.");
+    return NULL;
+  }
+
+  int count = wifi_getCredentials(storedCredentials, 5);
+
+  // Create the Empty JS array that will be passed as a parameter to the callback.
+  JsVar *jsCredentialsArray = jsvNewArray(NULL, 0);
+
+  for(i=0; i<count; i++) {
+    // Add a new object to the JS array that will be passed as a parameter to the callback.
+    // Create, populate and add a child ...
+    JsVar *jsCredential = jsvNewObject();
+
+    uint8_t ssidLen = storedCredentials[i].ssidLength;
+    storedCredentials[i].ssid[ssidLen] = '\0';
+    jsvObjectSetChildAndUnLock(jsCredential, "SSID", jsvNewFromString(storedCredentials[i].ssid));
+
+    if(storedCredentials[i].security == WLAN_SEC_UNSEC)
+      jsvObjectSetChildAndUnLock(jsCredential, "Security", jsvNewFromString("OPEN"));
+    else if(storedCredentials[i].security == WLAN_SEC_WEP)
+      jsvObjectSetChildAndUnLock(jsCredential, "Security", jsvNewFromString("WEP"));
+    else if(storedCredentials[i].security == WLAN_SEC_WPA)
+      jsvObjectSetChildAndUnLock(jsCredential, "Security", jsvNewFromString("WPA"));
+    else
+      jsvObjectSetChildAndUnLock(jsCredential, "Security", jsvNewFromString("WPA2"));
+
+    if(storedCredentials[i].cipher == WLAN_CIPHER_AES)
+      jsvObjectSetChildAndUnLock(jsCredential, "Cipher", jsvNewFromString("AES"));
+    else if(storedCredentials[i].cipher == WLAN_CIPHER_TKIP)
+      jsvObjectSetChildAndUnLock(jsCredential, "Cipher", jsvNewFromString("TKIP"));
+    else
+      jsvObjectSetChildAndUnLock(jsCredential, "Cipher", jsvNewFromString("AES_TKIP"));
+
+    // Add the new record to the array
+    jsvArrayPush(jsCredentialsArray, jsCredential);
+    jsvUnLock(jsCredential);
+  }
+
+  // Schedule callback if a function was provided
+  if (jsvIsFunction(jsCallback)) {
+    JsVar *params[1];
+    params[0] = jsCredentialsArray;
+    jsiQueueEvents(NULL, jsCallback, params, 1);
+  }
+
+  return jsCredentialsArray;
+}
+
+/*JSON{
+  "type"     : "staticmethod",
+  "class"    : "WiFi",
   "name"     : "clearCredentials",
   "generate" : "jswrap_duo_wifi_clearCredentials"
 }
@@ -193,7 +296,7 @@ JsVar *jswrap_duo_wifi_details(JsVar *jsCallback) {
   const char *ssid;
 
   if(!wifi_isReady()) {
-	  jsExceptionHere(JSET_ERROR, "WiFi isn't ready, please wait a moment...");
+    jsExceptionHere(JSET_ERROR, "WiFi isn't ready, please wait a moment...");
     return NULL;
   }
 
@@ -210,22 +313,184 @@ JsVar *jswrap_duo_wifi_details(JsVar *jsCallback) {
   wifi_dnsServerIP(dns_ip);
   wifi_dhcpServerIP(dhcp_ip);
 
-  JsVar *jsLocalIP = jsvNewObject();
-  jsvObjectSetChildAndUnLock(jsLocalIP, "SSID", jsvNewFromString(ssid));
-  jsvObjectSetChildAndUnLock(jsLocalIP, "Gateway", networkGetAddressAsString(gateway_ip, 4, 10, '.'));
-  jsvObjectSetChildAndUnLock(jsLocalIP, "DNS", networkGetAddressAsString(dns_ip, 4, 10, '.'));
-  jsvObjectSetChildAndUnLock(jsLocalIP, "DHCP", networkGetAddressAsString(dhcp_ip, 4, 10, '.'));
-  jsvObjectSetChildAndUnLock(jsLocalIP, "Net Mask", networkGetAddressAsString(netmask, 4, 10, '.'));
-  jsvObjectSetChildAndUnLock(jsLocalIP, "Duo", networkGetAddressAsString(local_ip, 4, 10, '.'));
+  JsVar *jsDetails = jsvNewObject();
+  jsvObjectSetChildAndUnLock(jsDetails, "SSID", jsvNewFromString(ssid));
+  jsvObjectSetChildAndUnLock(jsDetails, "Gateway", networkGetAddressAsString(gateway_ip, 4, 10, '.'));
+  jsvObjectSetChildAndUnLock(jsDetails, "DNS", networkGetAddressAsString(dns_ip, 4, 10, '.'));
+  jsvObjectSetChildAndUnLock(jsDetails, "DHCP", networkGetAddressAsString(dhcp_ip, 4, 10, '.'));
+  jsvObjectSetChildAndUnLock(jsDetails, "Net Mask", networkGetAddressAsString(netmask, 4, 10, '.'));
+  jsvObjectSetChildAndUnLock(jsDetails, "Duo", networkGetAddressAsString(local_ip, 4, 10, '.'));
 
   // Schedule callback if a function was provided
   if (jsvIsFunction(jsCallback)) {
     JsVar *params[1];
-    params[0] = jsLocalIP;
+    params[0] = jsDetails;
     jsiQueueEvents(NULL, jsCallback, params, 1);
   }
 
-  return jsLocalIP;
+  return jsDetails;
+}
+
+/*JSON{
+  "type"     : "staticmethod",
+  "class"    : "WiFi",
+  "name"     : "resolve",
+  "generate" : "jswrap_duo_wifi_resolve",
+  "return"   : ["JsVar", "An string representing the IP address."],
+  "params"   : [
+    ["jsHostName", "JsVar", "A string contains the host name"]
+  ]
+}
+*/
+JsVar *jswrap_duo_wifi_resolve(JsVar *jsHostName) {
+  char hostNameString[64+1];
+  int hostNameLen = 0;
+  uint8_t host_ip[4];
+
+  if(!wifi_isReady()) {
+    jsExceptionHere(JSET_ERROR, "WiFi isn't ready.");
+    return NULL;
+  }
+
+  // Make sure jsHostName a string
+  if(!jsvIsString(jsHostName)) {
+    jsExceptionHere(JSET_ERROR, "jsHostName is not a string");
+	return NULL;
+  }
+
+  hostNameLen = jsvGetString(jsHostName, hostNameString, sizeof(hostNameString)-1);
+  hostNameString[hostNameLen] = '\0';
+
+  wifi_resolve(hostNameString, host_ip);
+
+  JsVar *jsIP = networkGetAddressAsString(host_ip, 4, 10, '.');
+
+  return jsIP;
+}
+
+/*JSON{
+  "type"     : "staticmethod",
+  "class"    : "WiFi",
+  "name"     : "ping",
+  "generate" : "jswrap_duo_wifi_ping",
+  "return"   : ["JsVar", "An integer representing the successful ping times."],
+  "params"   : [
+    ["jsDestIP", "JsVar", "A string contains the destination IP address"],
+    ["jsnRetry", "JsVar", "A integer contains the retry times"]
+  ]
+}
+*/
+JsVar *jswrap_duo_wifi_ping(JsVar *jsDestIP, JsVar *jsnTries) {
+  char destIPString[20];
+  int destIPLen = 0;
+  uint32_t destIP;
+  uint8_t ip[4];
+  uint32_t nTries;
+
+  if(!wifi_isReady()) {
+    jsExceptionHere(JSET_ERROR, "WiFi isn't ready.");
+    return NULL;
+  }
+
+  // Make sure jsDestIP a string
+  if(!jsvIsString(jsDestIP)) {
+    jsExceptionHere(JSET_ERROR, "jsDestIP is not a string");
+	return NULL;
+  }
+
+  // Make sure jsnTries an integer
+  if(!jsvIsInt(jsnTries)) {
+    jsExceptionHere(JSET_ERROR, "jsnTries is not an integer");
+	return NULL;
+  }
+
+  destIPLen = jsvGetString(jsDestIP, destIPString, sizeof(destIPString)-1);
+  destIPString[destIPLen] = '\0';
+  nTries = jsvGetInteger(jsnTries);
+  if(nTries == 0) nTries = 3;
+
+  destIP = networkParseIPAddress(destIPString);
+  ip[3] = (uint8_t)((destIP&0xFF000000) >> 24);
+  ip[2] = (uint8_t)((destIP&0xFF0000) >> 16);
+  ip[1] = (uint8_t)((destIP&0xFF00) >> 8);
+  ip[0] = (uint8_t)(destIP&0xFF);
+
+  uint32_t count = wifi_ping(ip, nTries);
+  JsVar *jsCount = jsvNewFromInteger(count);
+
+  return jsCount;
+}
+
+/*JSON{
+  "type"     : "staticmethod",
+  "class"    : "WiFi",
+  "name"     : "scan",
+  "generate" : "jswrap_duo_wifi_scan",
+  "return"   : ["JsVar", "An object representing the scanned Access Points."],
+  "params"   : [
+    ["callback", "JsVar", "An optional function to be called back with the scanned Access Points, i.e. the same object as returned directly. The callback function is more portable than the direct return value."]
+  ]
+}
+*/
+JsVar *jswrap_duo_wifi_scan(JsVar *jsCallback) {
+  WiFiAccessPoint scanResult[MAX_AP_SCAN_RESULT_COUNT];
+  uint8_t i;
+
+  // Check callback
+  if (jsCallback != NULL && !jsvIsNull(jsCallback) && !jsvIsFunction(jsCallback)) {
+    jsExceptionHere(JSET_ERROR, "jsCallback is not an function");
+    return NULL;
+  }
+
+  if(!wifi_actived)
+    jsExceptionHere(JSET_ERROR, "WiFi is turned off. Use WiFi.on() to enable WiFi first.");
+
+  int count = wifi_scan(scanResult, MAX_AP_SCAN_RESULT_COUNT);
+
+  // Create the Empty JS array that will be passed as a parameter to the callback.
+  JsVar *jsApArray = jsvNewArray(NULL, 0);
+
+  for(i=0; i<count; i++) {
+    // Add a new object to the JS array that will be passed as a parameter to the callback.
+    // Create, populate and add a child ...
+    JsVar *jsAp = jsvNewObject();
+
+    uint8_t ssidLen = scanResult[i].ssidLength;
+    scanResult[i].ssid[ssidLen] = '\0';
+    jsvObjectSetChildAndUnLock(jsAp, "SSID", jsvNewFromString(scanResult[i].ssid));
+    jsvObjectSetChildAndUnLock(jsAp, "BSSID", networkGetAddressAsString(scanResult[i].bssid, 6, 16, ':'));
+
+    if(scanResult[i].security == WLAN_SEC_UNSEC)
+      jsvObjectSetChildAndUnLock(jsAp, "Security", jsvNewFromString("OPEN"));
+    else if(scanResult[i].security == WLAN_SEC_WEP)
+      jsvObjectSetChildAndUnLock(jsAp, "Security", jsvNewFromString("WEP"));
+    else if(scanResult[i].security == WLAN_SEC_WPA)
+      jsvObjectSetChildAndUnLock(jsAp, "Security", jsvNewFromString("WPA"));
+    else
+      jsvObjectSetChildAndUnLock(jsAp, "Security", jsvNewFromString("WPA2"));
+
+    if(scanResult[i].cipher == WLAN_CIPHER_AES)
+      jsvObjectSetChildAndUnLock(jsAp, "Cipher", jsvNewFromString("AES"));
+    else if(scanResult[i].cipher == WLAN_CIPHER_TKIP)
+      jsvObjectSetChildAndUnLock(jsAp, "Cipher", jsvNewFromString("TKIP"));
+    else
+      jsvObjectSetChildAndUnLock(jsAp, "Cipher", jsvNewFromString("AES_TKIP"));
+
+    jsvObjectSetChildAndUnLock(jsAp, "RSSI", jsvNewFromInteger(scanResult[i].rssi));
+
+    // Add the new record to the array
+    jsvArrayPush(jsApArray, jsAp);
+    jsvUnLock(jsAp);
+  }
+
+  // Schedule callback if a function was provided
+  if (jsvIsFunction(jsCallback)) {
+    JsVar *params[1];
+    params[0] = jsApArray;
+    jsiQueueEvents(NULL, jsCallback, params, 1);
+  }
+
+  return jsApArray;
 }
 
 /*JSON{

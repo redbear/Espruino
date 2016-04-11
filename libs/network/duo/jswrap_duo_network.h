@@ -23,9 +23,14 @@ void jswrap_duo_wifi_on(void);
 void jswrap_duo_wifi_off(void);
 void jswrap_duo_wifi_disconnect(void);
 void jswrap_duo_wifi_connect(void);
+JsVar *jswrap_duo_wifi_isReady(JsVar *jsCallback);
 void jswrap_duo_wifi_setCredential(JsVar *jsCredential);
+JsVar *jswrap_duo_wifi_getCredentials(JsVar *jsCallback);
 void jswrap_duo_wifi_clearCredentials(void);
 JsVar *jswrap_duo_wifi_details(JsVar *jsCallback);
+JsVar *jswrap_duo_wifi_resolve(JsVar *jsHostName);
+JsVar *jswrap_duo_wifi_ping(JsVar *jsDestIP, JsVar *jsnTries);
+JsVar *jswrap_duo_wifi_scan(JsVar *jsCallback);
 void jswrap_duo_wifi_init(void);
 
 #endif /* LIBS_NETWORK_DUO_JSWRAP_DUO_NETWORK_H_ */
