@@ -32,7 +32,7 @@ void wifi_startListen(void);
 void wifi_stopListen(void);
 bool wifi_isListening(void);
 
-void wifi_setCredentials(const char *ssid, const char *password, unsigned long security);
+void wifi_setCredentials(const char *ssid, const char *password, unsigned long security, unsigned long cipher);
 bool wifi_hasCredentials(void);
 bool wifi_clearCredentials(void);
 int wifi_getCredentials(WiFiAccessPoint* results, size_t result_count);

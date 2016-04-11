@@ -117,9 +117,9 @@ bool wifi_isListening(void)
     return WiFi.listening();
 }
 
-void wifi_setCredentials(const char *ssid, const char *password, unsigned long security)
+void wifi_setCredentials(const char *ssid, const char *password, unsigned long security, unsigned long cipher)
 {
-	WiFi.setCredentials(ssid, password, security);
+    WiFi.setCredentials(ssid, password, security, cipher);
 }
 
 bool wifi_hasCredentials(void)
