@@ -23,6 +23,8 @@
 
 #include "wifi_api.h"
 
+static bool wifi_actived = false;
+
 
 /*JSON{
    "type": "library",
@@ -40,6 +42,7 @@ The wifi library is a generic cross-platform library to control the Wifi interfa
 */
 void jswrap_duo_wifi_on(void) {
   wifi_on();
+  wifi_actived = true;
 }
 
 /*JSON{
@@ -52,6 +55,7 @@ void jswrap_duo_wifi_on(void) {
 void jswrap_duo_wifi_off(void) {
   // TODO: drop sockets
   wifi_off();
+  wifi_actived = false;
 }
 
 /*JSON{
@@ -99,6 +103,9 @@ void jswrap_duo_wifi_setCredential(JsVar *jsCredential) {
   int passwordLen = 0;
   WLanSecurityType security = WLAN_SEC_NOT_SET;
   WLanSecurityCipher cipher = WLAN_CIPHER_NOT_SET;
+  
+  if(!wifi_actived)
+    jsExceptionHere(JSET_ERROR, "WiFi is disabled. Use WiFi.on() to enable WiFi first.");
 
   // Make sure jsSetings an object
   if(!jsvIsObject(jsCredential)) {
@@ -145,9 +152,9 @@ void jswrap_duo_wifi_setCredential(JsVar *jsCredential) {
   // cipher
   JsVar *jsCipher = jsvObjectGetChild(jsCredential, "cipher", 0);
   if(jsvIsString(jsCipher)) {
-    if(jsvIsStringEqual(jsCipher, "AES")) security = WLAN_CIPHER_AES;
-    else if(jsvIsStringEqual(jsCipher, "TKIP")) security = WLAN_CIPHER_TKIP;
-    else if(jsvIsStringEqual(jsCipher, "AES_TKIP")) security = WLAN_CIPHER_AES_TKIP;
+    if(jsvIsStringEqual(jsCipher, "AES")) cipher = WLAN_CIPHER_AES;
+    else if(jsvIsStringEqual(jsCipher, "TKIP")) cipher = WLAN_CIPHER_TKIP;
+    else if(jsvIsStringEqual(jsCipher, "AES_TKIP")) cipher = WLAN_CIPHER_AES_TKIP;
     else {
       jsvUnLock(jsCipher);
       jsExceptionHere(JSET_ERROR, "Unknown cipher type.");
