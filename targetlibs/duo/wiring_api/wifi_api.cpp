@@ -56,7 +56,7 @@ void wifi_BSSID(uint8_t* bssid)
 	WiFi.BSSID(bssid);
 }
 
-const char *SSID(void)
+const char *wifi_SSID(void)
 {
     return WiFi.SSID();
 }

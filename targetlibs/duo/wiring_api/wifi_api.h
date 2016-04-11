@@ -14,7 +14,7 @@ void wifi_gatewayIP(uint32_t *gateway_ip);
 void wifi_dnsServerIP(uint32_t *dns_ip);
 void wifi_dhcpServerIP(uint32_t *dhcp_ip);
 void wifi_BSSID(uint8_t* bssid);
-const char *SSID(void);
+const char *wifi_SSID(void);
 
 int8_t wifi_RSSI(void);
 
