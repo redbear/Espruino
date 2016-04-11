@@ -16,39 +16,54 @@ void wifi_macAddress(uint8_t *mac)
 	WiFi.macAddress(mac);
 }
 
-void wifi_localIP(uint32_t *local_ip)
+void wifi_localIP(uint8_t *local_ip)
 {
     IPAddress IP;
     IP = WiFi.localIP();
-    *local_ip = IP;
+    local_ip[0] = IP[0];
+    local_ip[1] = IP[1];
+    local_ip[2] = IP[2];
+    local_ip[3] = IP[3];
 }
 
-void wifi_subnetMask(uint32_t *net_mask)
+void wifi_subnetMask(uint8_t *net_mask)
 {
     IPAddress IP;
     IP = WiFi.subnetMask();
-    *net_mask = IP;
+    net_mask[0] = IP[0];
+    net_mask[1] = IP[1];
+    net_mask[2] = IP[2];
+    net_mask[3] = IP[3];
 }
 
-void wifi_gatewayIP(uint32_t *gateway_ip)
+void wifi_gatewayIP(uint8_t *gateway_ip)
 {
     IPAddress IP;
     IP = WiFi.gatewayIP();
-    *gateway_ip = IP;
+    gateway_ip[0] = IP[0];
+    gateway_ip[1] = IP[1];
+    gateway_ip[2] = IP[2];
+    gateway_ip[3] = IP[3];
 }
 
-void wifi_dnsServerIP(uint32_t *dns_ip)
+void wifi_dnsServerIP(uint8_t *dns_ip)
 {
     IPAddress IP;
     IP = WiFi.dnsServerIP();
-    *dns_ip = IP;
+    dns_ip[0] = IP[0];
+    dns_ip[1] = IP[1];
+    dns_ip[2] = IP[2];
+    dns_ip[3] = IP[3];
 }
 
-void wifi_dhcpServerIP(uint32_t *dhcp_ip)
+void wifi_dhcpServerIP(uint8_t *dhcp_ip)
 {
     IPAddress IP;
     IP = WiFi.dhcpServerIP();
-    *dhcp_ip = IP;
+    dhcp_ip[0] = IP[0];
+    dhcp_ip[1] = IP[1];
+    dhcp_ip[2] = IP[2];
+    dhcp_ip[3] = IP[3];
 }
 
 void wifi_BSSID(uint8_t* bssid)
@@ -66,9 +81,9 @@ int8_t wifi_RSSI(void)
     return WiFi.RSSI();
 }
 
-uint32_t wifi_ping(uint32_t ip, uint8_t nTries)
+uint32_t wifi_ping(uint8_t *ip, uint8_t nTries)
 {
-	IPAddress remoteIP = ip;
+	IPAddress remoteIP(ip[0], ip[1], ip[2], ip[3]);
     return WiFi.ping(remoteIP, nTries);
 }
 
@@ -132,25 +147,27 @@ bool wifi_clearCredentials(void)
     return WiFi.clearCredentials();
 }
 
-void resolve(const char* name, uint32_t *ip)
+void wifi_resolve(const char* name, uint8_t *ip)
 {
     IPAddress IP;
     IP = WiFi.resolve(name);
-    *ip = IP;
+    ip[0] = IP[0];
+    ip[1] = IP[1];
+    ip[2] = IP[2];
+    ip[3] = IP[3];
 }
 
-void wifi_setStaticIP(uint32_t host_ip, uint32_t netmask_ip, uint32_t gateway_ip, uint32_t dns_ip)
+void wifi_setStaticIP(uint8_t *host_ip, uint8_t *netmask_ip, uint8_t *gateway_ip, uint8_t *dns_ip)
 {
-    IPAddress host, netmask, gateway, dns;
+    IPAddress host(host_ip[0],host_ip[1],host_ip[2],host_ip[3]);
+    IPAddress netmask(netmask_ip[0],netmask_ip[1],netmask_ip[2],netmask_ip[3]);
+    IPAddress gateway(gateway_ip[0],gateway_ip[1],gateway_ip[2],gateway_ip[3]);
+    IPAddress dns(dns_ip[0],dns_ip[1],dns_ip[2],dns_ip[3]);
+
     IPAddress &_host=host;
     IPAddress &_netmask=netmask;
     IPAddress &_gateway=gateway;
     IPAddress &_dns=dns;
-
-    host = host_ip;
-    netmask = netmask_ip;
-    gateway = gateway_ip;
-    dns = dns_ip;
 
     WiFi.setStaticIP(_host, _netmask, _gateway, _dns);
 }
