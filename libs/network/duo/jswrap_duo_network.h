@@ -19,6 +19,13 @@
 
 #include "jsvar.h"
 
-
+void jswrap_duo_wifi_on(void);
+void jswrap_duo_wifi_off(void);
+void jswrap_duo_wifi_disconnect(void);
+void jswrap_duo_wifi_connect(void);
+void jswrap_duo_wifi_setCredential(JsVar *jsCredential);
+void jswrap_duo_wifi_clearCredentials(void);
+JsVar *jswrap_duo_wifi_details(JsVar *jsCallback);
+void jswrap_duo_wifi_init(void);
 
 #endif /* LIBS_NETWORK_DUO_JSWRAP_DUO_NETWORK_H_ */
