@@ -44,13 +44,14 @@ static uint32_t getNextGlobalSocketId(void);
 static int getClientIndexBySocketId(int socketId);
 static int getServerIndexBySocketId(int socketId);
 static int allocateNewClient(void);
+static int allocateNewServer(void);
 
 /**
  * Get the next new global socket id.
  * \return A new socketId that is assured to be unique.
  */
 static uint32_t getNextGlobalSocketId(void) {
-  if(g_nextSocketId < (SOCKET_INVALID-1)) return g_nextSocketId++;
+  if(g_nextSocketId < (SOCKET_INVALID-1)) return ++g_nextSocketId;
   else return SOCKET_INVALID;
 }
 
@@ -95,11 +96,11 @@ void netInit_duo(void) {
   uint8_t i;
   for(i=0; i<MAX_SERVER_SOCKETS; i++) {
     servers[i].server = NULL;
-    servers[i].socket_id = 0;
+    servers[i].socket_id = SOCKET_UNUSED;
   }
   for(i=0; i<MAX_CLIENT_SOCKETS; i++) {
     clients[i].client = NULL;
-    clients[i].socket_id = 0;
+    clients[i].socket_id = SOCKET_UNUSED;
   }
 }
 
@@ -126,14 +127,14 @@ void netSetCallbacks_duo(JsNetwork *net) {
  * that there was no new accepted socket.
  */
 int net_duo_accept(JsNetwork *net, int serverSckt) {
-  uint8_t index, i;
+  int index, i;
 
   if(g_nextSocketId >= (SOCKET_INVALID-1)) return -1;
 
   index = getServerIndexBySocketId(serverSckt);
-  if(index>0) {
+  if(index >= 0) {
     i = allocateNewClient();
-    if(i>0) {
+    if(i >= 0) {
       clients[i].client = TCPServer_available(servers[index].server);
       if(clients[i].client != NULL) {
         clients[i].socket_id = getNextGlobalSocketId();
@@ -151,11 +152,11 @@ int net_duo_accept(JsNetwork *net, int serverSckt) {
  * Returns the number of bytes received which may be 0 and <0 if there was an error.
  */
 int net_duo_recv(JsNetwork *net, int sckt, void *buf, size_t len) {
-  uint8_t index;
+  int index;
 
   index = getClientIndexBySocketId(sckt);
-  if(index>0) {
-	return TCPClient_read(clients[index].client, (uint8_t *)buf, len);
+  if(index >= 0) {
+    return TCPClient_read(clients[index].client, (uint8_t *)buf, len);
   }
 
   return 0;
@@ -168,11 +169,11 @@ int net_duo_recv(JsNetwork *net, int sckt, void *buf, size_t len) {
  * 0 to indicate no bytes sent or -1 to indicate an error.
  */
 int net_duo_send(JsNetwork *net, int sckt, const void *buf, size_t len) {
-  uint8_t index;
+  int index;
 
   index = getClientIndexBySocketId(sckt);
-  if(index>0) {
-	return TCPClient_write(clients[index].client, (uint8_t *)buf, len);
+  if(index >= 0) {
+    return TCPClient_write(clients[index].client, (uint8_t *)buf, len);
   }
 
   return 0;
@@ -212,7 +213,7 @@ void net_duo_gethostbyname(JsNetwork *net, char *hostname, uint32_t *outIp) {
  * Returns >=0 on success.
  */
 int net_duo_createSocket(JsNetwork *net, uint32_t ipAddress, unsigned short port) {
-  uint8_t index;
+  int index;
   uint32_t new_socket_id;
 
   new_socket_id = getNextGlobalSocketId();
@@ -220,29 +221,31 @@ int net_duo_createSocket(JsNetwork *net, uint32_t ipAddress, unsigned short port
   if(new_socket_id < SOCKET_INVALID) {
     if(ipAddress == 0) { // Server
       index = allocateNewServer();
-      if(index>0) {
+      if(index >= 0) {
         servers[index].server = TCPServer_newTCPServer(port);
         if(servers[index].server == NULL) return SOCKET_ERR_MEM;
         if(!TCPServer_begin(servers[index].server)) { // Start TCP server failed!
           TCPServer_deleteTCPServer(servers[index].server);
-          jsiConsolePrintf("INFO: TCP server starts failed!");
+          jsiConsolePrint(">WARNNING: TCP server starts failed!\n");
           return SOCKET_ERR_TIMEOUT;
         }
         servers[index].socket_id = new_socket_id;
+        jsiConsolePrintf(">INFO: New TCP server %d started!\n", new_socket_id);
         return new_socket_id;
       }
     }
     else { // Client
       index = allocateNewClient();
-      if(index>0) {
+      if(index >= 0) {
         clients[index].client = TCPClient_newTCPClient();
         if(clients[index].client == NULL) return SOCKET_ERR_MEM;
         if(!TCPClient_connectByIP(clients[index].client, ipAddress, port)) { // Connect to host failed!
           TCPClient_deleteTCPClient(clients[index].client);
-          jsiConsolePrintf("INFO: Conect to TCP server failed!");
+          jsiConsolePrint(">WARNNING: Conect to TCP server failed!\n");
           return SOCKET_ERR_TIMEOUT;
         }
         clients[index].socket_id = new_socket_id;
+        jsiConsolePrintf(">INFO: TCP client %d connected to server!\n", new_socket_id);
         return new_socket_id;
       }
     }
@@ -258,17 +261,17 @@ int net_duo_createSocket(JsNetwork *net, uint32_t ipAddress, unsigned short port
  * returning <0 to a send or recv call.
  */
 void net_duo_closeSocket(JsNetwork *net, int socketId) {
-  uint8_t index;
+  int index;
 
   index = getServerIndexBySocketId(socketId);
-  if(index>0) {
+  if(index >= 0) {
     TCPServer_deleteTCPServer(servers[index].server); // It will close the socket in under layer before deleted
     servers[index].socket_id = SOCKET_UNUSED;
     return;
   }
 
   index = getClientIndexBySocketId(socketId);
-  if(index>0) {
+  if(index >= 0) {
     TCPClient_stop(clients[index].client);
     TCPClient_deleteTCPClient(clients[index].client);
     clients[index].socket_id = SOCKET_UNUSED;
