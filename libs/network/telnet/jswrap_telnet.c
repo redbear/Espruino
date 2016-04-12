@@ -116,6 +116,8 @@ void jswrap_telnet_setOptions(JsVar *jsOptions) {
 void jswrap_telnet_init(void) {
 #ifdef LINUX
   tnSrvMode = telnetEnabled ? MODE_ON : MODE_OFF;
+#elif defined(REDBEARDUO)
+  tnSrvMode = MODE_OFF;
 #else
   tnSrvMode = MODE_ON; // hardcoded for now
 #endif

@@ -20,9 +20,9 @@
 #include "network.h"
 #include "network_duo.h"
 #include "jswrap_net.h"
+#include "jswrap_telnet.h"
 
 #include "wifi_api.h"
-#include "ticks_api.h"
 
 
 typedef enum {
@@ -524,7 +524,17 @@ void jswrap_duo_wifi_init(void) {
 bool jswrap_duo_wifi_idle(void) {
   if(wifi_isReady()) {
     wifi_state = WIFI_STATE_CONNECTED;
+
+    JsVar *jsTelnetMode = jsvNewObject();
+    jsvObjectSetChildAndUnLock(jsTelnetMode, "mode", jsvNewFromString("on"));
+    jswrap_telnet_setOptions(jsTelnetMode);
+    jsvUnLock(jsTelnetMode);
+
     return false;
+  }
+
+  if(wifi_hasCredentials()) {
+    wifi_connect();
   }
 
   return true;
