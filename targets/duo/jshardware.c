@@ -26,9 +26,6 @@
 #include "interrupts.h"
 
 
-static tcp_server *server = NULL;
-static tcp_client *client = NULL;
-
 // see jshPinWatch/jshGetWatchedPinState
 Pin watchedPins[16];
 
@@ -41,14 +38,6 @@ void jshInit() {
   // reset some vars
   for (i=0;i<16;i++)
     watchedPins[i] = PIN_UNDEFINED;
-
-  // turn on WiFi and connect to the AP stored
-  //wifi_on();
-  //wifi_connect();
-  
-  // start a tcp server with port number
-  server = TCPServer_newTCPServer(TCPPORT);
-  TCPServer_begin(server);
   
   // start serial console for user interaction
   // for both USB and serial 1 of the Duo
@@ -66,49 +55,6 @@ void jshIdle() {
     inited = true;
     jsiOneSecondAfterStartup();
   }
-
-  /*static bool foo = false;
-  foo = !foo;
-  jshPinSetValue(LED1_PININDEX, foo);*/
-
-  if (client)
-  {
-    while (TCPClient_available(client))
-    {
-        uint8_t c;
-        TCPClient_read(client, &c, 1);
-        jshPushIOCharEvent(EV_SERIAL1, c);        
-    }
-  }
-  else
-  {
-      client = TCPServer_available(server);
-
-      if (client)
-        jsiConsolePrint(
-#ifndef LINUX
-          // set up terminal to avoid word wrap
-          "\e[?7l"
-#endif
-          // rectangles @ http://www.network-science.de/ascii/
-          "\n"
-          " _____                 _ \n"
-          "|   __|___ ___ ___ _ _|_|___ ___ \n"
-          "|   __|_ -| . |  _| | | |   | . |\n"
-          "|_____|___|  _|_| |___|_|_|_|___|\n"
-          "          |_| http://espruino.com\n"
-          " "JS_VERSION" Copyright 2016 G.Williams\n"
-        // Point out about donations - but don't bug people
-        // who bought boards that helped Espruino
-#if !defined(PICO) && !defined(ESPRUINOBOARD)
-          "\n"
-          "Espruino is Open Source. Our work is supported\n"
-          "only by sales of official boards and donations:\n"
-          "http://espruino.com/Donate\n"
-#endif
-        );
-  }
-
 
   // read data from serial
   while (usartserial1_available())
@@ -358,10 +304,6 @@ void jshUSARTKick(IOEventFlags device) {
     if (c >= 0) {
       usartserial1_putc(c);
       usbserial_putc(c);
-
-      // if a tcp client connected, also sending out
-      if (client)
-        TCPClient_write(client, &c, 1);
     }
   }
 }
