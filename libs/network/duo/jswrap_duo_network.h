@@ -19,6 +19,8 @@
 
 #include "jsvar.h"
 
+#define MAX_AP_SCAN_RESULT_COUNT    10
+
 void jswrap_duo_wifi_on(void);
 void jswrap_duo_wifi_off(void);
 void jswrap_duo_wifi_disconnect(void);
@@ -32,5 +34,6 @@ JsVar *jswrap_duo_wifi_resolve(JsVar *jsHostName);
 JsVar *jswrap_duo_wifi_ping(JsVar *jsDestIP, JsVar *jsnTries);
 JsVar *jswrap_duo_wifi_scan(JsVar *jsCallback);
 void jswrap_duo_wifi_init(void);
+bool jswrap_duo_wifi_idle(void);
 
 #endif /* LIBS_NETWORK_DUO_JSWRAP_DUO_NETWORK_H_ */

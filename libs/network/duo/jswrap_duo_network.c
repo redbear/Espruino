@@ -22,12 +22,21 @@
 #include "jswrap_net.h"
 
 #include "wifi_api.h"
+#include "ticks_api.h"
 
-static bool wifi_actived = false;
+
+typedef enum {
+  WIFI_STATE_OFF,
+  WIFI_STATE_ON,
+  WIFI_STATE_CONNECTING,
+  WIFI_STATE_CONNECTED,
+}WiFi_State_t;
+
+static WiFi_State_t wifi_state = WIFI_STATE_OFF;
 
 
 /*JSON{
-   "type": "library",
+   "type": "class",
    "class": "WiFi"
 }
 The wifi library is a generic cross-platform library to control the Wifi interface.  It supports functionality such as connecting to wifi networks, getting network information, starting and access point, etc.
@@ -42,7 +51,7 @@ The wifi library is a generic cross-platform library to control the Wifi interfa
 */
 void jswrap_duo_wifi_on(void) {
   wifi_on();
-  wifi_actived = true;
+  if(wifi_state < WIFI_STATE_ON) wifi_state = WIFI_STATE_ON;
 }
 
 /*JSON{
@@ -54,8 +63,8 @@ void jswrap_duo_wifi_on(void) {
 */
 void jswrap_duo_wifi_off(void) {
   // TODO: drop sockets
-  wifi_off();
-  wifi_actived = false;
+  wifi_off(); // It will can wifi.disconnect() first
+  wifi_state = WIFI_STATE_OFF;
 }
 
 /*JSON{
@@ -68,6 +77,7 @@ void jswrap_duo_wifi_off(void) {
 void jswrap_duo_wifi_disconnect(void) {
   // TODO: drop sockets
   wifi_disconnect();
+  if(wifi_state > WIFI_STATE_ON) wifi_state = WIFI_STATE_ON;
 }
 
 /*JSON{
@@ -78,8 +88,10 @@ void jswrap_duo_wifi_disconnect(void) {
 }
 */
 void jswrap_duo_wifi_connect(void) {
-  if(wifi_hasCredentials())
-    wifi_connect();
+  if(wifi_hasCredentials()) {
+    wifi_connect(); // It will call wifi.on() first
+    wifi_state = WIFI_STATE_CONNECTING;
+  }
   else
     jsExceptionHere(JSET_ERROR, "No WiFi credentials available in Duo.\n \
             Use WiFi.setCredential({\"ssid\":\"YOUR_SSID\", \"password\":\"YOUR_PASS_WORD\", \"sec\":\"SECUTITY_TYPE\", \"cipher\":\"CIPHER_TYPE\"})\n \
@@ -135,9 +147,9 @@ void jswrap_duo_wifi_setCredential(JsVar *jsCredential) {
   int passwordLen = 0;
   WLanSecurityType security = WLAN_SEC_NOT_SET;
   WLanSecurityCipher cipher = WLAN_CIPHER_NOT_SET;
-  
-  if(!wifi_actived)
-    jsExceptionHere(JSET_ERROR, "WiFi is disabled. Use WiFi.on() to enable WiFi first.");
+
+  if(wifi_state == WIFI_STATE_OFF)
+    jsExceptionHere(JSET_ERROR, "WiFi is turned off. Use WiFi.on() to enable WiFi first.");
 
   // Make sure jsCredential an object
   if(!jsvIsObject(jsCredential)) {
@@ -295,8 +307,8 @@ JsVar *jswrap_duo_wifi_details(JsVar *jsCallback) {
   uint8_t local_ip[4], netmask[4], gateway_ip[4], dns_ip[4], dhcp_ip[4];
   const char *ssid;
 
-  if(!wifi_isReady()) {
-    jsExceptionHere(JSET_ERROR, "WiFi isn't ready, please wait a moment...");
+  if(wifi_state < WIFI_STATE_CONNECTED) {
+    jsExceptionHere(JSET_ERROR, "WiFi hasn't connected to AP yet.");
     return NULL;
   }
 
@@ -347,8 +359,8 @@ JsVar *jswrap_duo_wifi_resolve(JsVar *jsHostName) {
   int hostNameLen = 0;
   uint8_t host_ip[4];
 
-  if(!wifi_isReady()) {
-    jsExceptionHere(JSET_ERROR, "WiFi isn't ready.");
+  if(wifi_state < WIFI_STATE_CONNECTED) {
+    jsExceptionHere(JSET_ERROR, "WiFi hasn't connected to AP yet.");
     return NULL;
   }
 
@@ -387,8 +399,8 @@ JsVar *jswrap_duo_wifi_ping(JsVar *jsDestIP, JsVar *jsnTries) {
   uint8_t ip[4];
   uint32_t nTries;
 
-  if(!wifi_isReady()) {
-    jsExceptionHere(JSET_ERROR, "WiFi isn't ready.");
+  if(wifi_state < WIFI_STATE_CONNECTED) {
+    jsExceptionHere(JSET_ERROR, "WiFi hasn't connected to AP yet.");
     return NULL;
   }
 
@@ -442,7 +454,7 @@ JsVar *jswrap_duo_wifi_scan(JsVar *jsCallback) {
     return NULL;
   }
 
-  if(!wifi_actived)
+  if(wifi_state == WIFI_STATE_OFF)
     jsExceptionHere(JSET_ERROR, "WiFi is turned off. Use WiFi.on() to enable WiFi first.");
 
   int count = wifi_scan(scanResult, MAX_AP_SCAN_RESULT_COUNT);
@@ -499,7 +511,21 @@ JsVar *jswrap_duo_wifi_scan(JsVar *jsCallback) {
 }*/
 void jswrap_duo_wifi_init(void) {
   JsNetwork net;
+
   netInit_duo();
   networkCreate(&net, JSNETWORKTYPE_DUO);
   networkState = NETWORKSTATE_ONLINE;
+}
+
+/*JSON{
+  "type" : "idle",
+  "generate" : "jswrap_duo_wifi_idle"
+}*/
+bool jswrap_duo_wifi_idle(void) {
+  if(wifi_isReady()) {
+    wifi_state = WIFI_STATE_CONNECTED;
+    return false;
+  }
+
+  return true;
 }
