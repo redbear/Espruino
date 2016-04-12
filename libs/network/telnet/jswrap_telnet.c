@@ -179,7 +179,7 @@ void telnetStart(JsNetwork *net) {
   // create the listening socket
   printf("tnSrv: creating...\n");
   int sock = netCreateSocket(net, 0, PORT, NCF_NORMAL, NULL);
-  if (sock == 0) {
+  if (sock <= 0) {
     printf("tnSrv: cannot create listening socket\n");
     return;
   }
