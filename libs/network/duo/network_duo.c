@@ -57,6 +57,9 @@ static uint32_t getNextGlobalSocketId(void) {
 
 static int getClientIndexBySocketId(int socketId) {
   int i;
+  
+  if(socketId <= 0) return -1;
+  
   for(i=0; i<MAX_CLIENT_SOCKETS; i++) {
     if(clients[i].socket_id == (uint32_t)socketId) return i;
   }
@@ -65,6 +68,9 @@ static int getClientIndexBySocketId(int socketId) {
 
 static int getServerIndexBySocketId(int socketId) {
   int i;
+  
+  if(socketId <= 0) return -1;
+  
   for(i=0; i<MAX_SERVER_SOCKETS; i++) {
     if(servers[i].socket_id == (uint32_t)socketId) return i;
   }
