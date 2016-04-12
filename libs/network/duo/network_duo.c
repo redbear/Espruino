@@ -15,17 +15,98 @@
  * ----------------------------------------------------------------------------
  */
 
+#include "jsinteractive.h"
 #include "network_duo.h"
 #include "socketerrors.h"
 
+#include "tcpclient_api.h"
+#include "tcpserver_api.h"
+#include "wifi_api.h"
 
+
+typedef struct {
+  tcp_server *server;
+  sock_handle_t socket_id;
+}tcp_server_t;
+
+typedef struct {
+  tcp_client *client;
+  sock_handle_t socket_id;
+}tcp_client_t;
+
+static tcp_server_t servers[MAX_SERVER_SOCKETS];
+static tcp_client_t clients[MAX_CLIENT_SOCKETS];
+
+static uint32_t g_nextSocketId = 0;
+
+
+static uint32_t getNextGlobalSocketId(void);
+static int getClientIndexBySocketId(int socketId);
+static int getServerIndexBySocketId(int socketId);
+static int allocateNewClient(void);
+
+/**
+ * Get the next new global socket id.
+ * \return A new socketId that is assured to be unique.
+ */
+static uint32_t getNextGlobalSocketId(void) {
+  if(g_nextSocketId < (SOCKET_INVALID-1)) return g_nextSocketId++;
+  else return SOCKET_INVALID;
+}
+
+static int getClientIndexBySocketId(int socketId) {
+  int i;
+  for(i=0; i<MAX_CLIENT_SOCKETS; i++) {
+    if(clients[i].socket_id == (uint32_t)socketId) return i;
+  }
+  return -1;
+}
+
+static int getServerIndexBySocketId(int socketId) {
+  int i;
+  for(i=0; i<MAX_SERVER_SOCKETS; i++) {
+    if(servers[i].socket_id == (uint32_t)socketId) return i;
+  }
+  return -1;
+}
+
+static int allocateNewClient(void) {
+  int i;
+  for(i=0; i<MAX_CLIENT_SOCKETS; i++) {
+    if(clients[i].socket_id == SOCKET_UNUSED) return i;
+  }
+
+  return -1;
+}
+
+static int allocateNewServer(void) {
+  int i;
+  for(i=0; i<MAX_SERVER_SOCKETS; i++) {
+    if(servers[i].socket_id == SOCKET_UNUSED) return i;
+  }
+
+  return -1;
+}
+
+/**
+ * Initialize the entire socket array
+ */
+void netInit_duo(void) {
+  uint8_t i;
+  for(i=0; i<MAX_SERVER_SOCKETS; i++) {
+    servers[i].server = NULL;
+    servers[i].socket_id = 0;
+  }
+  for(i=0; i<MAX_CLIENT_SOCKETS; i++) {
+    clients[i].client = NULL;
+    clients[i].socket_id = 0;
+  }
+}
 
 /**
  * Define the implementation functions for the logical network functions.
  */
-void netSetCallbacks_duo(
-    JsNetwork *net //!< The Network we are going to use.
-  ) {
+void netSetCallbacks_duo(JsNetwork *net) {
     net->idle          = net_duo_idle;
     net->checkError    = net_duo_checkError;
     net->createsocket  = net_duo_createSocket;
@@ -44,10 +125,23 @@ void netSetCallbacks_duo(
  * accepted connection (socket) and, if it does, return it else return -1 to indicate
  * that there was no new accepted socket.
  */
-int net_duo_accept(
-    JsNetwork *net, //!< The Network we are going to use to create the socket.
-    int serverSckt  //!< The socket that we are checking to see if there is a new client connection.
-) {
+int net_duo_accept(JsNetwork *net, int serverSckt) {
+  uint8_t index, i;
+
+  if(g_nextSocketId >= (SOCKET_INVALID-1)) return -1;
+
+  index = getServerIndexBySocketId(serverSckt);
+  if(index>0) {
+    i = allocateNewClient();
+    if(i>0) {
+      clients[i].client = TCPServer_available(servers[index].server);
+      if(clients[i].client != NULL) {
+        clients[i].socket_id = getNextGlobalSocketId();
+        return clients[i].socket_id;
+      }
+    }
+  }
+
   return -1;
 }
 
@@ -56,13 +150,15 @@ int net_duo_accept(
  * Receive data from the network device.
  * Returns the number of bytes received which may be 0 and <0 if there was an error.
  */
-int net_duo_recv(
-    JsNetwork *net, //!< The Network we are going to use to create the socket.
-    int sckt,       //!< The socket from which we are to receive data.
-    void *buf,      //!< The storage buffer into which we will receive data.
-    size_t len      //!< The length of the buffer.
-) {
-    return 0;
+int net_duo_recv(JsNetwork *net, int sckt, void *buf, size_t len) {
+  uint8_t index;
+
+  index = getClientIndexBySocketId(sckt);
+  if(index>0) {
+	return TCPClient_read(clients[index].client, (uint8_t *)buf, len);
+  }
+
+  return 0;
 }
 
 
@@ -71,13 +167,15 @@ int net_duo_recv(
  * The return is the number of bytes actually transmitted which may also be
  * 0 to indicate no bytes sent or -1 to indicate an error.
  */
-int net_duo_send(
-    JsNetwork *net,  //!< The Network we are going to use to create the socket.
-    int sckt,        //!< The socket over which we will send data.
-    const void *buf, //!< The buffer containing the data to be sent.
-    size_t len       //!< The length of data in the buffer to send.
-) {
-    return 0;
+int net_duo_send(JsNetwork *net, int sckt, const void *buf, size_t len) {
+  uint8_t index;
+
+  index = getClientIndexBySocketId(sckt);
+  if(index>0) {
+	return TCPClient_write(clients[index].client, (uint8_t *)buf, len);
+  }
+
+  return 0;
 }
 
 
@@ -85,9 +183,7 @@ int net_duo_send(
  * Perform idle processing.
  * There is the possibility that we may wish to perform logic when we are idle.
  */
-void net_duo_idle(
-    JsNetwork *net //!< The Network we are part of.
-  ) {
+void net_duo_idle(JsNetwork *net) {
   // Don't echo here because it is called continuously
 }
 
@@ -96,24 +192,18 @@ void net_duo_idle(
  * Check for errors.
  * Returns true if there are NO errors.
  */
-bool net_duo_checkError(
-    JsNetwork *net //!< The Network we are checking.
-  ) {
+bool net_duo_checkError(JsNetwork *net) {
   return true;
 }
 
-
-static char *savedHostname = 0;
-
 /**
- * Get an IP address from a name. See the hack description above. This always returns -1
+ * Get an IP address from a name.
  */
-void net_duo_gethostbyname(
-    JsNetwork *net, //!< The Network we are going to use to create the socket.
-    char *hostname, //!< The string representing the hostname we wish to lookup.
-    uint32_t *outIp //!< The address into which the resolved IP address will be stored.
-  ) {
+void net_duo_gethostbyname(JsNetwork *net, char *hostname, uint32_t *outIp) {
+  uint8_t host_ip[4];
 
+  wifi_resolve(hostname, host_ip);
+  *outIp = (uint32_t)(host_ip[0] | (host_ip[1] << 8) | (host_ip[2] << 16) | (host_ip[3] << 24));
 }
 
 /**
@@ -121,12 +211,44 @@ void net_duo_gethostbyname(
  * if `ipAddress == 0`, creates a server otherwise creates a client (and automatically connects).
  * Returns >=0 on success.
  */
-int net_duo_createSocket(
-    JsNetwork *net,     //!< The Network we are going to use to create the socket.
-    uint32_t ipAddress, //!< The address of the partner of the socket or 0 if we are to be a server.
-    unsigned short port //!< The port number that the partner is listening upon.
-) {
+int net_duo_createSocket(JsNetwork *net, uint32_t ipAddress, unsigned short port) {
+  uint8_t index;
+  uint32_t new_socket_id;
 
+  new_socket_id = getNextGlobalSocketId();
+
+  if(new_socket_id < SOCKET_INVALID) {
+    if(ipAddress == 0) { // Server
+      index = allocateNewServer();
+      if(index>0) {
+        servers[index].server = TCPServer_newTCPServer(port);
+        if(servers[index].server == NULL) return SOCKET_ERR_MEM;
+        if(!TCPServer_begin(servers[index].server)) { // Start TCP server failed!
+          TCPServer_deleteTCPServer(servers[index].server);
+          jsiConsolePrintf("INFO: TCP server starts failed!");
+          return SOCKET_ERR_TIMEOUT;
+        }
+        servers[index].socket_id = new_socket_id;
+        return new_socket_id;
+      }
+    }
+    else { // Client
+      index = allocateNewClient();
+      if(index>0) {
+        clients[index].client = TCPClient_newTCPClient();
+        if(clients[index].client == NULL) return SOCKET_ERR_MEM;
+        if(!TCPClient_connectByIP(clients[index].client, ipAddress, port)) { // Connect to host failed!
+          TCPClient_deleteTCPClient(clients[index].client);
+          jsiConsolePrintf("INFO: Conect to TCP server failed!");
+          return SOCKET_ERR_TIMEOUT;
+        }
+        clients[index].socket_id = new_socket_id;
+        return new_socket_id;
+      }
+    }
+  }
+
+  return SOCKET_ERR_MAX_SOCK;
 }
 
 /**
@@ -135,9 +257,23 @@ int net_duo_createSocket(
  * an acknowledgment after we signal the socket library that a connection has closed by
  * returning <0 to a send or recv call.
  */
-void net_duo_closeSocket(
-    JsNetwork *net, //!< The Network we are going to use to create the socket.
-    int socketId    //!< The socket to be closed.
-) {
+void net_duo_closeSocket(JsNetwork *net, int socketId) {
+  uint8_t index;
 
+  index = getServerIndexBySocketId(socketId);
+  if(index>0) {
+    TCPServer_deleteTCPServer(servers[index].server); // It will close the socket in under layer before deleted
+    servers[index].socket_id = SOCKET_UNUSED;
+    return;
+  }
+
+  index = getClientIndexBySocketId(socketId);
+  if(index>0) {
+    TCPClient_stop(clients[index].client);
+    TCPClient_deleteTCPClient(clients[index].client);
+    clients[index].socket_id = SOCKET_UNUSED;
+    return;
+  }
 }
+
+

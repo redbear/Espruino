@@ -499,6 +499,7 @@ JsVar *jswrap_duo_wifi_scan(JsVar *jsCallback) {
 }*/
 void jswrap_duo_wifi_init(void) {
   JsNetwork net;
+  netInit_duo();
   networkCreate(&net, JSNETWORKTYPE_DUO);
   networkState = NETWORKSTATE_ONLINE;
 }
