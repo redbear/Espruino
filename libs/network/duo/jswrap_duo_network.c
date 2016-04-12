@@ -535,6 +535,7 @@ bool jswrap_duo_wifi_idle(void) {
 
   if(wifi_hasCredentials()) {
     wifi_connect();
+    wifi_state = WIFI_STATE_CONNECTING;
   }
 
   return true;
