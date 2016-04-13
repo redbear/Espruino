@@ -552,6 +552,7 @@ bool jswrap_duo_wifi_idle(void) {
       auto_connect = false;
     }
   }
+  else if(auto_connect) auto_connect = false;
 
   return true;
 }
