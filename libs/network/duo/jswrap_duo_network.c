@@ -33,6 +33,7 @@ typedef enum {
 }WiFi_State_t;
 
 static WiFi_State_t wifi_state = WIFI_STATE_OFF;
+static bool auto_connect = true;
 
 
 /*JSON{
@@ -65,6 +66,7 @@ void jswrap_duo_wifi_off(void) {
   // TODO: drop sockets
   wifi_off(); // It will can wifi.disconnect() first
   wifi_state = WIFI_STATE_OFF;
+  auto_connect = false;
 }
 
 /*JSON{
@@ -78,6 +80,7 @@ void jswrap_duo_wifi_disconnect(void) {
   // TODO: drop sockets
   wifi_disconnect();
   if(wifi_state > WIFI_STATE_ON) wifi_state = WIFI_STATE_ON;
+  auto_connect = false;
 }
 
 /*JSON{
@@ -522,8 +525,11 @@ void jswrap_duo_wifi_init(void) {
   "generate" : "jswrap_duo_wifi_idle"
 }*/
 bool jswrap_duo_wifi_idle(void) {
+  static uint8_t retry = 1;
+
   if(wifi_isReady()) {
     wifi_state = WIFI_STATE_CONNECTED;
+    auto_connect = false;
 
     JsVar *jsTelnetMode = jsvNewObject();
     jsvObjectSetChildAndUnLock(jsTelnetMode, "mode", jsvNewFromString("on"));
@@ -533,9 +539,18 @@ bool jswrap_duo_wifi_idle(void) {
     return false;
   }
 
-  if(wifi_hasCredentials()) {
-    wifi_connect();
-    wifi_state = WIFI_STATE_CONNECTING;
+  if(wifi_state < WIFI_STATE_CONNECTED && auto_connect && wifi_hasCredentials()) {
+    if(retry < 4) {
+      jsiConsolePrintf(">INFO: %dth Try connecting to AP ...\n", retry);
+      wifi_connect();
+      wifi_state = WIFI_STATE_CONNECTING;
+      retry++;
+    }
+    else {
+      wifi_off();
+      wifi_state = WIFI_STATE_OFF;
+      auto_connect = false;
+    }
   }
 
   return true;
