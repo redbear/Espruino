@@ -34,6 +34,7 @@ typedef enum {
 
 static WiFi_State_t wifi_state = WIFI_STATE_OFF;
 static bool auto_connect = true;
+static bool connect_failed = false; // Temporary variable to fix the bug that it auto-connects to AP when WiFi.on() is called.
 
 
 /*JSON{
@@ -51,7 +52,8 @@ The wifi library is a generic cross-platform library to control the Wifi interfa
 }
 */
 void jswrap_duo_wifi_on(void) {
-  wifi_on();
+  if(!connect_failed) wifi_on(); // Do not turn on WiFi if connect failed before, since it will cause to connect to AP automatically.
+
   if(wifi_state < WIFI_STATE_ON) wifi_state = WIFI_STATE_ON;
 }
 
@@ -210,7 +212,9 @@ void jswrap_duo_wifi_setCredential(JsVar *jsCredential) {
   }
   if(jsCipher != NULL) jsvUnLock(jsCipher);
 
+  if(connect_failed) wifi_on(); // To set credential, WiFi must be on. But if connect failed before, then WiFi.on() doesn't turn WiFi on actually, so we turn it on here.
   wifi_setCredentials(ssidString, passwordString, security, cipher);
+  if(connect_failed) wifi_off(); // Turn WiFi off to avoid connecting to AP automatically if connect failed before.
 }
 
 /*JSON{
@@ -527,32 +531,47 @@ void jswrap_duo_wifi_init(void) {
 bool jswrap_duo_wifi_idle(void) {
   static uint8_t retry = 1;
 
-  if(wifi_isReady()) {
-    wifi_state = WIFI_STATE_CONNECTED;
-    auto_connect = false;
-
-    JsVar *jsTelnetMode = jsvNewObject();
-    jsvObjectSetChildAndUnLock(jsTelnetMode, "mode", jsvNewFromString("on"));
-    jswrap_telnet_setOptions(jsTelnetMode);
-    jsvUnLock(jsTelnetMode);
-
-    return false;
+  if(wifi_state == WIFI_STATE_OFF || wifi_state == WIFI_STATE_ON) {
+    if(auto_connect && wifi_hasCredentials()) {
+      if(retry < 4) {
+        jsiConsolePrintf(">INFO: %dth Try connecting to AP ...\n", retry);
+        wifi_connect();
+        wifi_state = WIFI_STATE_CONNECTING;
+        retry++;
+      }
+      else { // Try 3 times failed
+        wifi_off();
+        wifi_state = WIFI_STATE_OFF;
+        connect_failed = true;
+        auto_connect = false;
+      }
+    }
+    else if(!wifi_hasCredentials()) auto_connect = false; // Cancel auto-connect since no credentials stored.
   }
 
-  if(wifi_state < WIFI_STATE_CONNECTED && auto_connect && wifi_hasCredentials()) {
-    if(retry < 4) {
-      jsiConsolePrintf(">INFO: %dth Try connecting to AP ...\n", retry);
-      wifi_connect();
-      wifi_state = WIFI_STATE_CONNECTING;
-      retry++;
+  if(wifi_state == WIFI_STATE_CONNECTING) {
+    if(wifi_isReady()) {
+      wifi_state = WIFI_STATE_CONNECTED;
+      connect_failed = false;
+      auto_connect = false;
+
+      JsVar *jsTelnetMode = jsvNewObject();
+      jsvObjectSetChildAndUnLock(jsTelnetMode, "mode", jsvNewFromString("on"));
+      jswrap_telnet_setOptions(jsTelnetMode);
+      jsvUnLock(jsTelnetMode);
+
+      return false;
     }
     else {
       wifi_off();
       wifi_state = WIFI_STATE_OFF;
-      auto_connect = false;
+      connect_failed = true;
     }
   }
-  else if(auto_connect) auto_connect = false;
+
+  if(wifi_state == WIFI_STATE_CONNECTED) {
+    return false;
+  }
 
   return true;
 }
