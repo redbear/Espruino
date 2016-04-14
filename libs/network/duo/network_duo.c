@@ -162,7 +162,9 @@ int net_duo_recv(JsNetwork *net, int sckt, void *buf, size_t len) {
 
   index = getClientIndexBySocketId(sckt);
   if(index >= 0) {
-    return TCPClient_read(clients[index].client, (uint8_t *)buf, len);
+    if(TCPClient_available(clients[index].client)) {
+      return TCPClient_read(clients[index].client, (uint8_t *)buf, len);
+    }
   }
 
   return 0;
@@ -179,7 +181,11 @@ int net_duo_send(JsNetwork *net, int sckt, const void *buf, size_t len) {
 
   index = getClientIndexBySocketId(sckt);
   if(index >= 0) {
-    return TCPClient_write(clients[index].client, (uint8_t *)buf, len);
+    int num = TCPClient_write(clients[index].client, (uint8_t *)buf, len);
+    if(num == -16){ // WICED_WOULD_BLOCK
+      num = 0;
+    }
+    return num;
   }
 
   return 0;
