@@ -61,6 +61,16 @@ void TCPClient_stop(void *tcp_client)
     ((TCPClient *)tcp_client)->stop();
 }
 
+uint8_t TCPClient_status(void *tcp_client)
+{
+    return ((TCPClient *)tcp_client)->status();
+}
+
+uint8_t TCPClient_connected(void *tcp_client)
+{
+    return ((TCPClient *)tcp_client)->connected();
+}
+
 
 #ifdef __cplusplus
 }

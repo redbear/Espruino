@@ -18,5 +18,8 @@ void TCPClient_flushBuffer(void *tcp_client);
 
 void TCPClient_stop(void *tcp_client);
 
+uint8_t TCPClient_status(void *tcp_client);
+uint8_t TCPClient_connected(void *tcp_client);
+
 
 #endif
