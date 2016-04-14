@@ -24,6 +24,7 @@
 #define SOCKET_INVALID  0x7FFFFFFF
 
 void netInit_duo(void);
+void netDisposeAllSockets_duo(void);
 void netSetCallbacks_duo(JsNetwork *net);
 bool net_duo_isconnected(JsNetwork *net, int sckt);
 int  net_duo_accept(JsNetwork *net, int serverSckt);

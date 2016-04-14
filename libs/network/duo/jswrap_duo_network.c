@@ -65,7 +65,7 @@ void jswrap_duo_wifi_on(void) {
 }
 */
 void jswrap_duo_wifi_off(void) {
-  // TODO: drop sockets
+  netDisposeAllSockets_duo();
   wifi_off(); // It will can wifi.disconnect() first
   wifi_state = WIFI_STATE_OFF;
   auto_connect = false;
@@ -79,8 +79,8 @@ void jswrap_duo_wifi_off(void) {
 }
 */
 void jswrap_duo_wifi_disconnect(void) {
-  // TODO: drop sockets
-  wifi_disconnect();
+  netDisposeAllSockets_duo();
+  wifi_disconnect(); // Lower layer is responsible for closing all sockets
   if(wifi_state > WIFI_STATE_ON) wifi_state = WIFI_STATE_ON;
   auto_connect = false;
 }

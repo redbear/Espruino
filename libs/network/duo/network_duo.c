@@ -118,6 +118,27 @@ void netInit_duo(void) {
 }
 
 /**
+ * Drop all sockets
+ */
+void netDisposeAllSockets_duo(void) {
+  int index;
+
+  for(index=0; index<MAX_SERVER_SOCKETS; index++) {
+    if(servers[index].server != NULL)
+      TCPServer_deleteTCPServer(servers[index].server);
+  }
+
+  for(index=0; index<MAX_CLIENT_SOCKETS; index++) {
+    if(clients[index].client != NULL) {
+      TCPClient_stop(clients[index].client);
+      TCPClient_deleteTCPClient(clients[index].client);
+    }
+  }
+
+  netInit_duo();
+}
+
+/**
  * Define the implementation functions for the logical network functions.
  */
 void netSetCallbacks_duo(JsNetwork *net) {
@@ -129,7 +150,7 @@ void netSetCallbacks_duo(JsNetwork *net) {
     net->gethostbyname = net_duo_gethostbyname;
     net->recv          = net_duo_recv;
     net->send          = net_duo_send;
-    net->isconnected     = net_duo_isconnected;
+    net->isconnected   = net_duo_isconnected;
     // The TCP MSS is 536, we use half that 'cause otherwise we easily run out of JSvars memory
     net->chunkSize     = 536/2;
 }
@@ -150,6 +171,13 @@ bool net_duo_isconnected(JsNetwork *net, int sckt) {
     }
   }
 
+  index = getServerIndexBySocketId(sckt);
+  if(index >= 0) {
+    if(servers[index].socket_state == SOCKET_STATE_USED) {
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -162,7 +190,7 @@ bool net_duo_isconnected(JsNetwork *net, int sckt) {
 int net_duo_accept(JsNetwork *net, int serverSckt) {
   int index, i;
 
-  if(g_nextSocketId >= (SOCKET_INVALID-1)) return -1;
+  if(g_nextSocketId >= (SOCKET_INVALID-1)) return SOCKET_ERR_MAX_SOCK;
 
   index = getServerIndexBySocketId(serverSckt);
   if(index >= 0) {
@@ -255,7 +283,7 @@ int net_duo_createSocket(JsNetwork *net, uint32_t ipAddress, unsigned short port
   int index;
   uint32_t new_socket_id;
 
-  new_socket_id = getNextGlobalSocketId();
+  if(g_nextSocketId >= (SOCKET_INVALID-1)) return SOCKET_ERR_MAX_SOCK;
 
   if(new_socket_id < SOCKET_INVALID) {
     if(ipAddress == 0) { // Server
@@ -265,9 +293,9 @@ int net_duo_createSocket(JsNetwork *net, uint32_t ipAddress, unsigned short port
         if(servers[index].server == NULL) return SOCKET_ERR_MEM;
         if(!TCPServer_begin(servers[index].server)) { // Start TCP server failed!
           TCPServer_deleteTCPServer(servers[index].server);
-          jsiConsolePrint(">WARNNING: TCP server starts failed!\n");
           return SOCKET_ERR_TIMEOUT;
         }
+        new_socket_id = getNextGlobalSocketId();
         servers[index].socket_id = new_socket_id;
         servers[index].socket_state = SOCKET_STATE_USED;
         jsiConsolePrintf(">INFO: New TCP server %d started!\n", new_socket_id);
@@ -281,9 +309,9 @@ int net_duo_createSocket(JsNetwork *net, uint32_t ipAddress, unsigned short port
         if(clients[index].client == NULL) return SOCKET_ERR_MEM;
         if(!TCPClient_connectByIP(clients[index].client, ipAddress, port)) { // Connect to host failed!
           TCPClient_deleteTCPClient(clients[index].client);
-          jsiConsolePrint(">WARNNING: Conect to TCP server failed!\n");
           return SOCKET_ERR_TIMEOUT;
         }
+        new_socket_id = getNextGlobalSocketId();
         clients[index].socket_id = new_socket_id;
         clients[index].socket_state = SOCKET_STATE_USED;
         jsiConsolePrintf(">INFO: TCP client %d connected to server!\n", new_socket_id);
@@ -306,17 +334,23 @@ void net_duo_closeSocket(JsNetwork *net, int socketId) {
 
   index = getServerIndexBySocketId(socketId);
   if(index >= 0) {
-    TCPServer_deleteTCPServer(servers[index].server); // It will close the socket in under layer before deleted
-    servers[index].socket_state = SOCKET_STATE_UNUSED;
-    return;
+    if(servers[index].server != NULL) {
+      TCPServer_deleteTCPServer(servers[index].server); // It will close the socket in under layer before deleted
+      servers[index].server = NULL;
+      servers[index].socket_state = SOCKET_STATE_UNUSED;
+      return;
+    }
   }
 
   index = getClientIndexBySocketId(socketId);
   if(index >= 0) {
-    TCPClient_stop(clients[index].client);
-    TCPClient_deleteTCPClient(clients[index].client);
-    clients[index].socket_state = SOCKET_STATE_UNUSED;
-    return;
+    if(clients[index].client != NULL) {
+      TCPClient_stop(clients[index].client);
+      TCPClient_deleteTCPClient(clients[index].client);
+      clients[index].client = NULL;
+      clients[index].socket_state = SOCKET_STATE_UNUSED;
+      return;
+    }
   }
 }
 
