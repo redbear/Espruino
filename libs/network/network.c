@@ -738,3 +738,7 @@ int netSend(JsNetwork *net, int sckt, const void *buf, size_t len) {
     return net->send(net, sckt, buf, len);
   }
 }
+
+bool netIsConnected(JsNetwork *net, int sckt) {
+  return net->isconnected(net, sckt);
+}

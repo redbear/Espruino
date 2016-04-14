@@ -39,11 +39,13 @@ bool telnetEnabled = false; // whether telnet should be enabled or not. Set in m
 
 // Forward function declarations
 
+bool telnetIsConnected(JsNetwork *net);
 void telnetStart(JsNetwork *net);
 void telnetStop(JsNetwork *net);
 bool telnetAccept(JsNetwork *net);
 bool telnetSendBuf(JsNetwork *net);
 bool telnetRecv(JsNetwork *net);
+void telnetRelease(JsNetwork *net);
 
 // Telnet console data structures
 
@@ -170,11 +172,18 @@ bool jswrap_telnet_idle(void) {
   active |= telnetSendBuf(&net);
   //if (active) printf("tnSrv: idle=%d\n", active);
 
+  if(!telnetIsConnected(&net)) telnetRelease(&net);
+
   networkFree(&net);
   return active;
 }
 
 //===== Internal functions
+
+// Check if telnet is disconected by remote client
+bool telnetIsConnected(JsNetwork *net) {
+  return net->isconnected(net, tnSrv.cliSock);
+}
 
 // Start the listening socket for the telnet console server.
 void telnetStart(JsNetwork *net) {

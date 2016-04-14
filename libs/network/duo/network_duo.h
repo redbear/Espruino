@@ -21,11 +21,11 @@
 
 #define MAX_SERVER_SOCKETS  3
 #define MAX_CLIENT_SOCKETS  10
-#define SOCKET_UNUSED  0x0
 #define SOCKET_INVALID  0x7FFFFFFF
 
 void netInit_duo(void);
 void netSetCallbacks_duo(JsNetwork *net);
+bool net_duo_isconnected(JsNetwork *net, int sckt);
 int  net_duo_accept(JsNetwork *net, int serverSckt);
 int  net_duo_recv(JsNetwork *net, int sckt, void *buf, size_t len);
 int  net_duo_send(JsNetwork *net, int sckt, const void *buf, size_t len);

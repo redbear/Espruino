@@ -24,14 +24,21 @@
 #include "wifi_api.h"
 
 
+typedef enum {
+  SOCKET_STATE_UNUSED,
+  SOCKET_STATE_USED,
+}socket_state_t;
+
 typedef struct {
   tcp_server *server;
   sock_handle_t socket_id;
+  socket_state_t socket_state;
 }tcp_server_t;
 
 typedef struct {
   tcp_client *client;
   sock_handle_t socket_id;
+  socket_state_t socket_state;
 }tcp_client_t;
 
 static tcp_server_t servers[MAX_SERVER_SOCKETS];
@@ -80,7 +87,7 @@ static int getServerIndexBySocketId(int socketId) {
 static int allocateNewClient(void) {
   int i;
   for(i=0; i<MAX_CLIENT_SOCKETS; i++) {
-    if(clients[i].socket_id == SOCKET_UNUSED) return i;
+    if(clients[i].socket_state == SOCKET_STATE_UNUSED) return i;
   }
 
   return -1;
@@ -89,7 +96,7 @@ static int allocateNewClient(void) {
 static int allocateNewServer(void) {
   int i;
   for(i=0; i<MAX_SERVER_SOCKETS; i++) {
-    if(servers[i].socket_id == SOCKET_UNUSED) return i;
+    if(servers[i].socket_state == SOCKET_STATE_UNUSED) return i;
   }
 
   return -1;
@@ -102,11 +109,11 @@ void netInit_duo(void) {
   uint8_t i;
   for(i=0; i<MAX_SERVER_SOCKETS; i++) {
     servers[i].server = NULL;
-    servers[i].socket_id = SOCKET_UNUSED;
+    servers[i].socket_state = SOCKET_STATE_UNUSED;
   }
   for(i=0; i<MAX_CLIENT_SOCKETS; i++) {
     clients[i].client = NULL;
-    clients[i].socket_id = SOCKET_UNUSED;
+    clients[i].socket_state = SOCKET_STATE_UNUSED;
   }
 }
 
@@ -122,8 +129,28 @@ void netSetCallbacks_duo(JsNetwork *net) {
     net->gethostbyname = net_duo_gethostbyname;
     net->recv          = net_duo_recv;
     net->send          = net_duo_send;
+    net->isconnected     = net_duo_isconnected;
     // The TCP MSS is 536, we use half that 'cause otherwise we easily run out of JSvars memory
     net->chunkSize     = 536/2;
+}
+
+
+/**
+ * Check socket connection state.
+ */
+bool net_duo_isconnected(JsNetwork *net, int sckt) {
+  int index;
+
+  index = getClientIndexBySocketId(sckt);
+  if(index >= 0) {
+    if(clients[index].socket_state == SOCKET_STATE_USED) {
+      if(TCPClient_connected(clients[index].client)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -144,6 +171,7 @@ int net_duo_accept(JsNetwork *net, int serverSckt) {
       clients[i].client = TCPServer_available(servers[index].server);
       if(clients[i].client != NULL) {
         clients[i].socket_id = getNextGlobalSocketId();
+        clients[i].socket_state = SOCKET_STATE_USED;
         return clients[i].socket_id;
       }
     }
@@ -194,10 +222,9 @@ int net_duo_send(JsNetwork *net, int sckt, const void *buf, size_t len) {
 
 /**
  * Perform idle processing.
- * There is the possibility that we may wish to perform logic when we are idle.
  */
 void net_duo_idle(JsNetwork *net) {
-  // Don't echo here because it is called continuously
+  // Do nothing or, should check socket connection ?
 }
 
 
@@ -242,6 +269,7 @@ int net_duo_createSocket(JsNetwork *net, uint32_t ipAddress, unsigned short port
           return SOCKET_ERR_TIMEOUT;
         }
         servers[index].socket_id = new_socket_id;
+        servers[index].socket_state = SOCKET_STATE_USED;
         jsiConsolePrintf(">INFO: New TCP server %d started!\n", new_socket_id);
         return new_socket_id;
       }
@@ -257,6 +285,7 @@ int net_duo_createSocket(JsNetwork *net, uint32_t ipAddress, unsigned short port
           return SOCKET_ERR_TIMEOUT;
         }
         clients[index].socket_id = new_socket_id;
+        clients[index].socket_state = SOCKET_STATE_USED;
         jsiConsolePrintf(">INFO: TCP client %d connected to server!\n", new_socket_id);
         return new_socket_id;
       }
@@ -278,7 +307,7 @@ void net_duo_closeSocket(JsNetwork *net, int socketId) {
   index = getServerIndexBySocketId(socketId);
   if(index >= 0) {
     TCPServer_deleteTCPServer(servers[index].server); // It will close the socket in under layer before deleted
-    servers[index].socket_id = SOCKET_UNUSED;
+    servers[index].socket_state = SOCKET_STATE_UNUSED;
     return;
   }
 
@@ -286,7 +315,7 @@ void net_duo_closeSocket(JsNetwork *net, int socketId) {
   if(index >= 0) {
     TCPClient_stop(clients[index].client);
     TCPClient_deleteTCPClient(clients[index].client);
-    clients[index].socket_id = SOCKET_UNUSED;
+    clients[index].socket_state = SOCKET_STATE_UNUSED;
     return;
   }
 }
