@@ -268,6 +268,8 @@ JsSysTime jshGetSystemTime() {
 }
 
 void jshSetSystemTime(JsSysTime time) {
+  // Duo does not support setting system time for now.
+  return;
 }
 
 // ----------------------------------------------------------------------------
@@ -313,6 +315,8 @@ bool jshIsEventForPin(IOEvent *event, Pin pin) {
 }
 
 void jshUSARTSetup(IOEventFlags device, JshUSARTInfo *inf) {
+  // Duo has initialized all serial interfaces under lower layer
+  return;
 }
 
 /** Kick a device into action (if required). For instance we may need
@@ -328,13 +332,29 @@ void jshUSARTKick(IOEventFlags device) {
 }
 
 void jshSPISetup(IOEventFlags device, JshSPIInfo *inf) {
+  if(device == EV_SPI1) {
+    if(!spi_isEnabled()) {
+      spi_setDataMode(inf->spiMode);
+      spi_setBitOrder( inf->spiMSB ? MSBFIRST:LSBFIRST );
+      spi_begin();
+    }
+  }
+  else if(device == EV_SPI2) {
+    if(!spi1_isEnabled()) {
+      spi1_setDataMode(inf->spiMode);
+      spi1_setBitOrder( inf->spiMSB ? MSBFIRST:LSBFIRST );
+      spi1_begin();
+    }
+  }
 }
 
 /** Send data through the given SPI device (if data>=0), and return the result
  * of the previous send (or -1). If data<0, no data is sent and the function
  * waits for data to be returned */
 int jshSPISend(IOEventFlags device, int data) {
-  return 0;
+  if(device == EV_SPI1) return (int)spi_transfer((uint8_t) data);
+  else if(device == EV_SPI2) return (int)spi1_transfer((uint8_t) data);
+  else return -1;
 }
 
 /** Send 16 bit data through the given SPI device. */
@@ -345,10 +365,19 @@ void jshSPISend16(IOEventFlags device, int data) {
 
 /** Set whether to send 16 bits or 8 over SPI */
 void jshSPISet16(IOEventFlags device, bool is16) {
+  // Duo does not support 16 bits data mode for now
+  return;
 }
 
 /** Set whether to use the receive interrupt or not */
 void jshSPISetReceive(IOEventFlags device, bool isReceive) {
+  // Duo does not use interrupt to received data.
+  return;
+}
+
+void jshSPIWait(IOEventFlags device) {
+  // Duo does not need to wait when sending data.
+  return;
 }
 
 void jshI2CSetup(IOEventFlags device, JshI2CInfo *inf) {
@@ -504,12 +533,6 @@ JshPinState jshPinGetState(Pin pin)
 {
     JshPinState j;
 	return j;
-}
-
-void jshSPIWait(
-    IOEventFlags device //!< Unknown
-) {
-  return;
 }
 
 void jshEnableWatchDog(JsVarFloat timeout) {

@@ -71,9 +71,9 @@ bool spi_isEnabled(void)
 
 
 
-void spi1_begin(uint16_t ss_pin)
+void spi1_begin(void)
 {
-    SPI1.begin(ss_pin);
+    SPI1.begin();
 }
 
 void spi1_end(void)

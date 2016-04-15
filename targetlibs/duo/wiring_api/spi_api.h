@@ -19,7 +19,7 @@ bool spi_isEnabled(void);
 
 
 
-void spi1_begin(uint16_t ss_pin);
+void spi1_begin(void);
 void spi1_end(void);
 void spi1_setBitOrder(uint8_t bitOrder);
 void spi1_setDataMode(uint8_t mode);
