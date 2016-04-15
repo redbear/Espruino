@@ -5,9 +5,9 @@ extern "C" {
 #endif
 
 
-void spi_begin(uint16_t ss_pin)
+void spi_begin(void)
 {
-    SPI.begin(ss_pin);
+    SPI.begin();
 }
 
 void spi_end(void)

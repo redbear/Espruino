@@ -5,7 +5,7 @@
 typedef void (*wiring_spi_dma_transfercomplete_callback_t)(void);
 
 
-void spi_begin(uint16_t ss_pin);
+void spi_begin(void);
 void spi_end(void);
 void spi_setBitOrder(uint8_t bitOrder);
 void spi_setDataMode(uint8_t mode);
