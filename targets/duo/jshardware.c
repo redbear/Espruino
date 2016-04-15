@@ -152,9 +152,11 @@ static ALWAYS_INLINE uint8_t stmPinSource(JsvPinInfoPin ipin) {
 }
 
 void jshInterruptOff() {
+  __disable_irq();
 }
 
 void jshInterruptOn() {
+  __enable_irq();
 }
 
 void jshDelayMicroseconds(int microsec) {
