@@ -210,6 +210,9 @@ bool jshIsEventForPin(IOEvent *event, Pin pin);
  * eg. has jshUSARTSetup/jshI2CSetup/jshSPISetup been called previously? */
 bool jshIsDeviceInitialised(IOEventFlags device);
 
+/// Set a bit mask flag that the device has been initialsed.
+void jshSetDeviceInitialised(IOEventFlags device, bool isInit);
+
 
 #define DEFAULT_BAUD_RATE               9600
 #define DEFAULT_BYTESIZE                8

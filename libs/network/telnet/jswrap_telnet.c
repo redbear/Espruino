@@ -208,6 +208,7 @@ void telnetStop(JsNetwork *net) {
   tnSrv.cliSock = 0;
   if (tnSrv.sock != 0) netCloseSocket(net, tnSrv.sock);
   tnSrv.sock = 0;
+  jshSetDeviceInitialised(EV_TELNET, false);
 }
 
 // Attempt to accept a connection, returns true if it did something
@@ -221,6 +222,7 @@ bool telnetAccept(JsNetwork *net) {
   if (tnSrv.cliSock != 0) {
     netCloseSocket(net, tnSrv.cliSock);
   }
+  jshSetDeviceInitialised(EV_TELNET, true);
   jsiSetConsoleDevice(EV_TELNET);
 
   tnSrv.cliSock = sock;
@@ -235,6 +237,7 @@ void telnetRelease(JsNetwork *net) {
   netCloseSocket(net, tnSrv.cliSock);
   tnSrv.cliSock = 0;
   jsiSetConsoleDevice( DEFAULT_CONSOLE_DEVICE );
+  jshSetDeviceInitialised(EV_TELNET, false);
 }
 
 // Attempt to send buffer on an established client connection, returns true if it sent something

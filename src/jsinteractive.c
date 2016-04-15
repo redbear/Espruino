@@ -141,9 +141,33 @@ void jsiSetConsoleDevice(
   if (device == consoleDevice) return;
 
   if (!jshIsDeviceInitialised(device)) {
-    JshUSARTInfo inf;
-    jshUSARTInitInfo(&inf);
-    jshUSARTSetup(device, &inf);
+    if(DEVICE_IS_USART(device)) {
+      JshUSARTInfo inf;
+      jshUSARTInitInfo(&inf);
+      jshUSARTSetup(device, &inf);
+    }
+    else if(DEVICE_IS_SPI(device)) {
+      JshSPIInfo inf;
+      jshSPIInitInfo(&inf);
+      jshSPISetup(device, &inf);
+    }
+    else if(DEVICE_IS_I2C(device)) {
+      JshI2CInfo inf;
+      jshI2CInitInfo(&inf);
+      jshI2CSetup(device, &inf);
+    }
+#ifdef BLUETOOTH
+    else if(device == EV_BLUETOOTH) {
+      jsiConsolePrint("Can not move console to Bluetooth since it hasn't been initialised yet.\n");
+      return;
+    }
+#endif
+#ifdef USE_TELNET
+    else if(device = EV_TELNET) {
+      jsiConsolePrint("Can not move console to Telnet since it hasn't been initialised yet.\n");
+      return;
+    }
+#endif
   }
 
   // Log to the old console that we are moving consoles and then, once we have moved

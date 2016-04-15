@@ -43,6 +43,9 @@ void jshInit() {
   // for both USB and serial 1 of the Duo
   usartserial1_begin(9600);
   usbserial_begin(9600);  
+
+  jshSetDeviceInitialised(EV_SERIAL1, true);
+  jshSetDeviceInitialised(EV_SERIAL2, true);
 }
 
 void jshKill() {
@@ -232,7 +235,21 @@ bool jshIsPinValid(Pin pin) {
   return (pin<JSH_PIN_COUNT && 0xFF!=jspin_to_hal(pin));
 }
 
-bool jshIsDeviceInitialised(IOEventFlags device) { return true; }
+static uint64_t DEVICE_INITIALISED_FLAGS = 0L;
+
+bool jshIsDeviceInitialised(IOEventFlags device) {
+  uint64_t mask = 1ULL << (int)device;
+  return (DEVICE_INITIALISED_FLAGS & mask) != 0L;
+}
+
+void jshSetDeviceInitialised(IOEventFlags device, bool isInit) {
+  uint64_t mask = 1ULL << (int)device;
+  if (isInit) {
+    DEVICE_INITIALISED_FLAGS |= mask;
+  } else {
+    DEVICE_INITIALISED_FLAGS &= ~mask;
+  }
+}
 
 bool jshIsUSBSERIALConnected() {
   return false;
