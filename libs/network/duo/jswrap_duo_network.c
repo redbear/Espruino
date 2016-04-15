@@ -65,10 +65,15 @@ void jswrap_duo_wifi_on(void) {
 }
 */
 void jswrap_duo_wifi_off(void) {
-  netDisposeAllSockets_duo();
-  wifi_off(); // It will can wifi.disconnect() first
-  wifi_state = WIFI_STATE_OFF;
-  auto_connect = false;
+#ifdef USE_TELNET
+  if(jsiGetConsoleDevice() != EV_TELNET)
+#endif
+  {
+    netDisposeAllSockets_duo();
+    wifi_off(); // It will can wifi.disconnect() first
+    wifi_state = WIFI_STATE_OFF;
+    auto_connect = false;
+  }
 }
 
 /*JSON{
@@ -79,10 +84,15 @@ void jswrap_duo_wifi_off(void) {
 }
 */
 void jswrap_duo_wifi_disconnect(void) {
-  netDisposeAllSockets_duo();
-  wifi_disconnect(); // Lower layer is responsible for closing all sockets
-  if(wifi_state > WIFI_STATE_ON) wifi_state = WIFI_STATE_ON;
-  auto_connect = false;
+#ifdef USE_TELNET
+  if(jsiGetConsoleDevice() != EV_TELNET)
+#endif
+  {
+    netDisposeAllSockets_duo();
+    wifi_disconnect(); // Lower layer is responsible for closing all sockets
+    if(wifi_state > WIFI_STATE_ON) wifi_state = WIFI_STATE_ON;
+    auto_connect = false;
+  }
 }
 
 /*JSON{
