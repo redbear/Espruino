@@ -163,7 +163,7 @@ void jsiSetConsoleDevice(
     }
 #endif
 #ifdef USE_TELNET
-    else if(device = EV_TELNET) {
+    else if(device == EV_TELNET) {
       jsiConsolePrint("Can not move console to Telnet since it hasn't been initialised yet.\n");
       return;
     }
