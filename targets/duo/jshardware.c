@@ -415,12 +415,36 @@ void jshSPIWait(IOEventFlags device) {
 }
 
 void jshI2CSetup(IOEventFlags device, JshI2CInfo *inf) {
+  if(device == EV_I2C1) {
+    i2c_setSpeed((uint32_t)inf->bitrate);
+    i2c_stretchClock(false);
+    i2c_begin(); 
+
+    jshSetDeviceInitialised(EV_I2C1, true);
+  }
 }
 
 void jshI2CWrite(IOEventFlags device, unsigned char address, int nBytes, const unsigned char *data, bool sendStop) {
+  int i;
+
+  if(device == EV_I2C1) {
+    i2c_beginTransmission(address);
+    for(i=0; i<nBytes; i++) {
+      i2c_writeOneByte(data[i]);
+    }
+    i2c_endTransmission(sendStop);
+  }
 }
 
 void jshI2CRead(IOEventFlags device, unsigned char address, int nBytes, unsigned char *data, bool sendStop) {
+  int i;
+
+  if(device == EV_I2C1) {
+    i2c_requestFrom(address, nBytes, sendStop);
+    for(i=0; i<nBytes; i++) {
+      data[i] = i2c_read();
+    }
+  }
 }
 
 /// Enter simple sleep mode (can be woken up by interrupts). Returns true on success

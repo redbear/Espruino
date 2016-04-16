@@ -15,6 +15,7 @@
 #include "timer_api.h"
 #include "interrupt_api.h"
 #include "spi_api.h"
+#include "i2c_api.h"
 
 #ifdef __cplusplus
 extern "C" {
