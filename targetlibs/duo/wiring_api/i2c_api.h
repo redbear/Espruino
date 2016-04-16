@@ -6,7 +6,6 @@
 void i2c_setSpeed(uint32_t clockSpeed);
 void i2c_enableDMAMode(bool enableDMAMode);
 void i2c_stretchClock(bool stretch);
-bool i2c_isEnabled(void);
 
 void i2c_begin(uint8_t ownAddress);
 void i2c_beginTransmission(uint8_t address);
