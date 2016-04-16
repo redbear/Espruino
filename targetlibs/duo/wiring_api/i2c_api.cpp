@@ -20,9 +20,9 @@ void i2c_stretchClock(bool stretch)
     Wire.stretchClock(stretch);
 }
 
-void i2c_begin(uint8_t ownAddress)
+void i2c_begin(void)
 {
-    Wire.begin(ownAddress);
+    Wire.begin();
 }
 
 void i2c_beginTransmission(uint8_t address)
