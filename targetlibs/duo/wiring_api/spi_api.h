@@ -1,6 +1,7 @@
 #ifndef _SPI_API_H
 #define _SPI_API_H
 
+#include "spi_hal.h"
 
 typedef void (*wiring_spi_dma_transfercomplete_callback_t)(void);
 

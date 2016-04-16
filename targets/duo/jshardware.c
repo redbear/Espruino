@@ -331,21 +331,55 @@ void jshUSARTKick(IOEventFlags device) {
   }
 }
 
+static unsigned int jshGetSPIFreq(IOEventFlags device) {
+  RCC_ClocksTypeDef clocks;
+  RCC_GetClocksFreq(&clocks);
+  bool APB2 = device == EV_SPI1;
+  return APB2 ? clocks.PCLK2_Frequency : clocks.PCLK1_Frequency;
+}
+
 void jshSPISetup(IOEventFlags device, JshSPIInfo *inf) {
-  if(device == EV_SPI1) {
-    if(!spi_isEnabled()) {
-      spi_setDataMode(inf->spiMode);
-      spi_setBitOrder( inf->spiMSB ? MSBFIRST:LSBFIRST );
-      spi_begin();
+  // try and find the best baud rate
+  unsigned int spiFreq = jshGetSPIFreq(device);
+  const unsigned int baudRatesDivisors[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
+  const uint8_t baudRatesIds[8] = { SPI_CLOCK_DIV2, SPI_CLOCK_DIV4, SPI_CLOCK_DIV8, SPI_CLOCK_DIV16,
+                                    SPI_CLOCK_DIV32, SPI_CLOCK_DIV64, SPI_CLOCK_DIV128, SPI_CLOCK_DIV256 };
+  int bestDifference = 0x7FFFFFFF;
+  unsigned int i;
+  uint8_t rate = SPI_CLOCK_DIV128;
+
+  for(i=0; i<8; i++) {
+    unsigned int baudrate = spiFreq / baudRatesDivisors[i];
+
+    int rateDiff = inf->baudRate - (int)baudrate;
+    if(rateDiff < 0) rateDiff *= -1;
+
+    // if this is outside what we want, make sure it's considered a bad choice
+    if(inf->baudRateSpec == SPIB_MAXIMUM && baudrate > (unsigned int)inf->baudRate) rateDiff += 0x10000000;
+    if(inf->baudRateSpec == SPIB_MINIMUM && baudrate < (unsigned int)inf->baudRate) rateDiff += 0x10000000;
+
+    if(rateDiff < bestDifference) {
+      bestDifference = rateDiff;
+      rate = baudRatesIds[i];
     }
+  }
+
+  if(device == EV_SPI1) {
+    spi_begin();
+
+    spi_setClockDivider(rate);
+    spi_setDataMode(inf->spiMode);
+    spi_setBitOrder( inf->spiMSB ? MSBFIRST:LSBFIRST );
   }
   else if(device == EV_SPI2) {
-    if(!spi1_isEnabled()) {
-      spi1_setDataMode(inf->spiMode);
-      spi1_setBitOrder( inf->spiMSB ? MSBFIRST:LSBFIRST );
-      spi1_begin();
-    }
+    spi1_begin();
+
+    spi1_setClockDivider(rate);
+    spi1_setDataMode(inf->spiMode);
+    spi1_setBitOrder( inf->spiMSB ? MSBFIRST:LSBFIRST );
   }
+
+  jshSetDeviceInitialised(device, true);
 }
 
 /** Send data through the given SPI device (if data>=0), and return the result
