@@ -241,6 +241,29 @@ bool jshPinGetValue(Pin pin) {
   return digitalRead(_pin);
 }
 
+void jshPinPulse(Pin pin, bool pulsePolarity, JsVarFloat pulseTime) {
+  // ---- USE TIMER FOR PULSE
+  if (!jshIsPinValid(pin)) {
+    jsExceptionHere(JSET_ERROR, "Invalid pin!");
+    return;
+  }
+  if (pulseTime<=0) {
+    // just wait for everything to complete
+    jstUtilTimerWaitEmpty();
+    return;
+  } else {
+    // find out if we already had a timer scheduled
+    UtilTimerTask task;
+    if (!jstGetLastPinTimerTask(pin, &task)) {
+      // no timer - just start the pulse now!
+      jshPinOutput(pin, pulsePolarity);
+      task.time = jshGetSystemTime();
+    }
+    // Now set the end of the pulse to happen on a timer
+    jstPinOutputAtTime(task.time + jshGetTimeFromMilliseconds(pulseTime), &pin, 1, !pulsePolarity);
+  }
+}
+
 bool jshIsPinValid(Pin pin) {
   return (pin<JSH_PIN_COUNT && 0xFF!=jspin_to_hal(pin));
 }
@@ -283,9 +306,6 @@ void jshSetSystemTime(JsSysTime time) {
 }
 
 // ----------------------------------------------------------------------------
-
-void jshPinPulse(Pin pin, bool value, JsVarFloat time) {
-}
 
 bool jshCanWatch(Pin pin) {
   if (jshIsPinValid(pin)) {
@@ -380,7 +400,7 @@ void jshSPISetup(IOEventFlags device, JshSPIInfo *inf) {
     spi_setClockDivider(rate);
     spi_setDataMode(inf->spiMode);
     spi_setBitOrder( inf->spiMSB ? MSBFIRST:LSBFIRST );
-	jshSetDeviceInitialised(EV_SPI1, true);
+    jshSetDeviceInitialised(EV_SPI1, true);
   }
   else if(device == EV_SPI2) {
     spi1_begin();
@@ -388,7 +408,7 @@ void jshSPISetup(IOEventFlags device, JshSPIInfo *inf) {
     spi1_setClockDivider(rate);
     spi1_setDataMode(inf->spiMode);
     spi1_setBitOrder( inf->spiMSB ? MSBFIRST:LSBFIRST );
-	jshSetDeviceInitialised(EV_SPI2, true);
+    jshSetDeviceInitialised(EV_SPI2, true);
   }
 }
 
@@ -428,7 +448,7 @@ void jshI2CSetup(IOEventFlags device, JshI2CInfo *inf) {
   if(device == EV_I2C1) {
     i2c_setSpeed((uint32_t)inf->bitrate);
     i2c_stretchClock(false);
-    i2c_begin(); 
+    i2c_begin();
 
     jshSetDeviceInitialised(EV_I2C1, true);
   }
@@ -588,7 +608,6 @@ void jshFlashWrite(void *buf, uint32_t addr, uint32_t len) {
   FLASH_Lock();
 }
 
-// Fake functions to make link stage walk through
 void jshReset(void) {
   return;
 }
