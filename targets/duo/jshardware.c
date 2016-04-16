@@ -370,6 +370,7 @@ void jshSPISetup(IOEventFlags device, JshSPIInfo *inf) {
     spi_setClockDivider(rate);
     spi_setDataMode(inf->spiMode);
     spi_setBitOrder( inf->spiMSB ? MSBFIRST:LSBFIRST );
+	jshSetDeviceInitialised(EV_SPI1, true);
   }
   else if(device == EV_SPI2) {
     spi1_begin();
@@ -377,9 +378,8 @@ void jshSPISetup(IOEventFlags device, JshSPIInfo *inf) {
     spi1_setClockDivider(rate);
     spi1_setDataMode(inf->spiMode);
     spi1_setBitOrder( inf->spiMSB ? MSBFIRST:LSBFIRST );
+	jshSetDeviceInitialised(EV_SPI2, true);
   }
-
-  jshSetDeviceInitialised(device, true);
 }
 
 /** Send data through the given SPI device (if data>=0), and return the result
