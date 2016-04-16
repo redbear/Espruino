@@ -20,6 +20,11 @@ void i2c_stretchClock(bool stretch)
     Wire.stretchClock(stretch);
 }
 
+bool i2c_isEnabled(void)
+{
+    return Wire.isEnabled();
+}
+
 void i2c_begin(uint8_t ownAddress)
 {
     Wire.begin(ownAddress);
