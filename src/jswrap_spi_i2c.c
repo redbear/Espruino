@@ -568,6 +568,14 @@ void jswrap_i2c_writeTo(JsVar *parent, JsVar *addressVar, JsVar *args) {
   IOEventFlags device = jsiGetDeviceFromClass(parent);
   if (!DEVICE_IS_I2C(device)) return;
 
+#ifdef REDBEARDUO
+  if (!jshIsDeviceInitialised(device)) {
+    JshI2CInfo inf;
+    jshI2CInitInfo(&inf);
+    jshI2CSetup(device, &inf);
+  }
+#endif
+
   bool sendStop = true;
   int address = i2c_get_address(addressVar, &sendStop);
 
@@ -594,6 +602,14 @@ Request bytes from the given slave device, and return them as a Uint8Array (pack
 JsVar *jswrap_i2c_readFrom(JsVar *parent, JsVar *addressVar, int nBytes) {
   IOEventFlags device = jsiGetDeviceFromClass(parent);
   if (!DEVICE_IS_I2C(device)) return 0;
+
+#ifdef REDBEARDUO
+  if (!jshIsDeviceInitialised(device)) {
+    JshI2CInfo inf;
+    jshI2CInitInfo(&inf);
+    jshI2CSetup(device, &inf);
+  }
+#endif
 
   bool sendStop = true;
   int address = i2c_get_address(addressVar, &sendStop);
