@@ -154,6 +154,16 @@ static ALWAYS_INLINE uint8_t stmPinSource(JsvPinInfoPin ipin) {
   return (uint8_t)(pin-JSH_PIN0);
 }
 
+static ALWAYS_INLINE GPIO_TypeDef *stmPort(Pin pin) {
+  JsvPinInfoPort port = pinInfo[pin].port;
+  return (GPIO_TypeDef *)((char*)GPIOA + (port-JSH_PORTA)*0x0400);
+}
+
+static ALWAYS_INLINE uint16_t stmPin(Pin ipin) {
+  JsvPinInfoPin pin = pinInfo[ipin].pin;
+  return (uint16_t)(1 << (pin-JSH_PIN0));
+}
+
 void jshInterruptOff() {
   __disable_irq();
 }
@@ -587,18 +597,41 @@ unsigned int jshSetSystemClock(JsVar *options) {
   return 0;
 }
 
-JshPinState jshPinGetState(Pin pin)
-{
-    JshPinState j;
-	return j;
+JshPinFunction jshGetCurrentPinFunction(Pin pin) {
+  // FIXME: This isn't actually right - we need to look at the hardware or store this info somewhere.
+  if (jshIsPinValid(pin)) {
+    int i;
+    for (i=0;i<JSH_PININFO_FUNCTIONS;i++) {
+      JshPinFunction func = pinInfo[pin].functions[i];
+      if (JSH_PINFUNCTION_IS_TIMER(func) || JSH_PINFUNCTION_IS_DAC(func))
+        return func;
+    }
+  }
+  return JSH_NOTHING;
+}
+
+JshPinState jshPinGetState(Pin pin) {
+  GPIO_TypeDef* port = stmPort(pin);
+  uint16_t pinn = stmPin(pin);
+  int pinNumber = pinInfo[pin].pin;
+  bool isOn = (port->ODR&pinn) != 0;
+
+  int mode = (port->MODER >> (pinNumber*2)) & 3;
+  if (mode==0) { // input
+    int pupd = (port->PUPDR >> (pinNumber*2)) & 3;
+    if (pupd==1) return JSHPINSTATE_GPIO_IN_PULLUP;
+    if (pupd==2) return JSHPINSTATE_GPIO_IN_PULLDOWN;
+    return JSHPINSTATE_GPIO_IN;
+  } else if (mode==1) { // output
+    return ((port->OTYPER&pinn) ? JSHPINSTATE_GPIO_OUT_OPENDRAIN : JSHPINSTATE_GPIO_OUT) |
+            (isOn ? JSHPINSTATE_PIN_IS_ON : 0);
+  } else if (mode==2) { // AF
+    return (port->OTYPER&pinn) ? JSHPINSTATE_AF_OUT_OPENDRAIN : JSHPINSTATE_AF_OUT;
+  } else { // 3, analog
+    return JSHPINSTATE_ADC_IN;
+  }
 }
 
 void jshEnableWatchDog(JsVarFloat timeout) {
   return;
-}
-
-JshPinFunction jshGetCurrentPinFunction(Pin pin)
-{
-    JshPinFunction j;
-	return j;
 }
