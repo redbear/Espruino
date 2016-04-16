@@ -570,6 +570,7 @@ USE_BLUETOOTH=1
 USE_NET=1
 USE_TELNET=1
 USE_CRYPTO=1
+USE_HASHLIB=1
 
 else
 ifeq ($(shell uname -m),armv6l)
