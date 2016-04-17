@@ -29,18 +29,21 @@ void TCPServer_stop(void *tcp_server)
 
 void* TCPServer_available(void *tcp_server)
 {
-	TCPClient *_tcp_client = new TCPClient();
+    TCPClient *_tcp_client = new TCPClient();
 
-    *_tcp_client = ((TCPServer *)tcp_server)->available();
-    if(*_tcp_client)
-    {
-        return (void *)_tcp_client;
+    if(_tcp_client != NULL) {
+        *_tcp_client = ((TCPServer *)tcp_server)->available();
+        if(*_tcp_client)
+        {
+            return (void *)_tcp_client;
+        }
+        else
+        {
+    	    delete _tcp_client;
+            return NULL;
+        }
     }
-    else
-    {
-    	delete _tcp_client;
-        return NULL;
-    }
+    return NULL;
 }
 
 size_t TCPServer_write(void *tcp_server, uint8_t *buf, size_t size)
