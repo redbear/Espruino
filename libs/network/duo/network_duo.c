@@ -200,6 +200,7 @@ int net_duo_accept(JsNetwork *net, int serverSckt) {
       if(clients[i].client != NULL) {
         clients[i].socket_id = getNextGlobalSocketId();
         clients[i].socket_state = SOCKET_STATE_USED;
+        jsiConsolePrintf(">INFO: New TCP client socket %d connected to server socket %d.\n", clients[i].socket_id, serverSckt);
         return clients[i].socket_id;
       }
     }
@@ -282,6 +283,9 @@ void net_duo_gethostbyname(JsNetwork *net, char *hostname, uint32_t *outIp) {
 int net_duo_createSocket(JsNetwork *net, uint32_t ipAddress, unsigned short port) {
   int index;
   uint32_t new_socket_id;
+  uint8_t ip[4];
+  char destIPString[20];
+  int destIPLen = 0;
 
   if(g_nextSocketId >= (SOCKET_INVALID-1)) return SOCKET_ERR_MAX_SOCK;
 
@@ -298,7 +302,7 @@ int net_duo_createSocket(JsNetwork *net, uint32_t ipAddress, unsigned short port
         new_socket_id = getNextGlobalSocketId();
         servers[index].socket_id = new_socket_id;
         servers[index].socket_state = SOCKET_STATE_USED;
-        jsiConsolePrintf(">INFO: New TCP server %d started!\n", new_socket_id);
+        jsiConsolePrintf(">INFO: New TCP server socket %d listening on port %d\n", new_socket_id, port);
         return new_socket_id;
       }
     }
@@ -314,7 +318,14 @@ int net_duo_createSocket(JsNetwork *net, uint32_t ipAddress, unsigned short port
         new_socket_id = getNextGlobalSocketId();
         clients[index].socket_id = new_socket_id;
         clients[index].socket_state = SOCKET_STATE_USED;
-        jsiConsolePrintf(">INFO: TCP client %d connected to server!\n", new_socket_id);
+        ip[3] = (uint8_t)((ipAddress&0xFF000000) >> 24);
+        ip[2] = (uint8_t)((ipAddress&0xFF0000) >> 16);
+        ip[1] = (uint8_t)((ipAddress&0xFF00) >> 8);
+        ip[0] = (uint8_t)(ipAddress&0xFF);
+        destIPLen = jsvGetString(networkGetAddressAsString(ip, 4, 10, '.'), destIPString, sizeof(destIPString)-1);
+        destIPString[destIPLen] = '\0';
+        jsiConsolePrintf(">INFO: New TCP client socket %d connected to server %s:%d.\n", \
+        		new_socket_id, destIPString, port);
         return new_socket_id;
       }
     }
