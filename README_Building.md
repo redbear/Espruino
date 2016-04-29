@@ -132,6 +132,41 @@ Compiling Espruino:
 
 ----
 
+### for RedBear Duo
+
+**Note: You'll need arm-none-eabi-gcc 4.9.3 or above to compile the source code for RedBear Duo.** The Espruino for Duo depends on the [Particle firmware](https://github.com/spark/firmware). Actually, regarding to Duo, the Espruino is a user application based on Particle firmware and it must be loaded to Duo in binary format with crc32 appended.
+
+Firstly, setup the build tools and GCC toolchain environment.   
+
+To make the binary `espruino_xxxx_redbearduo.bin` with crc32 appended:   
+
+* Run ```REDBEARDUO=1 RELEASE=1 make```   
+
+To clean up the target files:   
+
+* Run ```REDBEARDUO=1 RELEASE=1 make clean```    
+
+To load Espruino to RedBear Duo:
+
+* If you don't have a RBLink in hand, you have to load the Espruino using **dfu-util**. Please follow this [Installation Guide](https://github.com/redbear/Duo/blob/master/docs/dfu.md) to set up dfu-util. Then connect your Duo to computer via its native USB and make it enter DFU Mode first:
+  1. Hold down BOTH buttons
+  2. Release only the RESET button, while holding down the SETUP button.
+  3. Wait for the LED to start blinking **yellow**
+  4. Release the SETUP button
+  
+    Then run ```REDBEARDUO=1 RELEASE=1 make flash```  
+
+* If you have a RBLink in hand, you can load the Espruino via the RBLink. For Windows, you need go to ST official website to download and install the [STLink driver](http://www.st.com/web/en/catalog/tools/PF260219). Mount your Duo onto RBLink and connect RBLink to computer.
+
+    Then run ```REDBEARDUO=1 RELEASE=1 make flash RBLINK=1```   
+
+#### How to play
+
+* For Windows, you need to [install the drivers](https://github.com/redbear/Duo/blob/master/docs/driver.md) for Duo first. 
+* [Start playing with Espruino on RedBear Duo!](https://github.com/redbear/Duo/tree/master/javascript)
+
+----
+
 ### for Linux
 
 Simple: Just run `make`
