@@ -23,6 +23,7 @@
 #include "jswrap_telnet.h"
 
 #include "wifi_api.h"
+#include "wiring_mdns.h"
 
 
 typedef enum {
@@ -534,6 +535,17 @@ void jswrap_duo_wifi_init(void) {
   networkState = NETWORKSTATE_ONLINE;
 }
 
+static void mdns_init()
+{
+    bool success = mDNS_setHostname("duo");
+
+    if (success) {
+        success = mDNS_setService("tcp", "espruino", TCPPORT, "Espruino for RedBear Duo");
+
+        success = mDNS_begin();
+    }
+}
+
 /*JSON{
   "type" : "idle",
   "generate" : "jswrap_duo_wifi_idle"
@@ -570,6 +582,8 @@ bool jswrap_duo_wifi_idle(void) {
       jswrap_telnet_setOptions(jsTelnetMode);
       jsvUnLock(jsTelnetMode);
 
+      mdns_init();
+
       return false;
     }
     else {
@@ -580,6 +594,7 @@ bool jswrap_duo_wifi_idle(void) {
   }
 
   if(wifi_state == WIFI_STATE_CONNECTED) {
+    mDNS_processQueries();
     return false;
   }
 
