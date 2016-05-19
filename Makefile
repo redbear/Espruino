@@ -183,6 +183,24 @@ STLIB=STM32F401xE
 PRECOMPILED_OBJS+=$(ROOT)/targetlibs/stm32f4/lib/startup_stm32f401xx.o
 OPTIMIZEFLAGS+=-Os
 
+else ifdef ESPRUINOWIFI
+EMBEDDED=1
+#USE_DFU=1
+DEFINES+= -DUSE_USB_OTG_FS=1  -DESPRUINOWIFI
+USE_USB_HID=1
+USE_NET=1
+USE_GRAPHICS=1
+USE_TV=1
+USE_HASHLIB=1
+USE_FILESYSTEM=1
+USE_CRYPTO=1
+USE_TLS=1
+BOARD=ESPRUINOWIFI
+STLIB=STM32F411xE
+#PRECOMPILED_OBJS+=$(ROOT)/targetlibs/stm32f4/lib/startup_stm32f40_41xxx.o # <- this seems like overkill
+PRECOMPILED_OBJS+=$(ROOT)/targetlibs/stm32f4/lib/startup_stm32f401xx.o
+OPTIMIZEFLAGS+=-Os
+
 else ifdef EFM32GGSTK
 EMBEDDED=1
 DEFINES+= -DEFM32GG890F1024=1 # This should be EFM32GG990F1024, temporary hack to avoid the #USB on line 772 in jsinteractive.c
@@ -741,6 +759,7 @@ src/jswrap_object.c \
 src/jswrap_onewire.c \
 src/jswrap_pipe.c \
 src/jswrap_process.c \
+src/jswrap_promise.c \
 src/jswrap_serial.c \
 src/jswrap_spi_i2c.c \
 src/jswrap_stream.c \
@@ -1054,7 +1073,7 @@ libs/crypto/mbedtls/library/sha512.c
 
 ifdef USE_TLS
   USE_AES=1
-  DEFINES += -DUSE_TLS=1 -DUSE_AES=1
+  DEFINES += -DUSE_TLS
   SOURCES += \
 libs/crypto/mbedtls/library/bignum.c \
 libs/crypto/mbedtls/library/ctr_drbg.c \
