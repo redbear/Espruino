@@ -6,7 +6,7 @@ typedef struct TCPClient tcp_client;
 void* TCPClient_newTCPClient(void);
 void TCPClient_deleteTCPClient(void *tcp_client);
 
-int TCPClient_connectByIP(void *tcp_client, uint32_t ip, uint16_t port);
+int TCPClient_connectByIP(void *tcp_client, uint8_t *ip, uint16_t port);
 int TCPClient_connectByHostName(void *tcp_client, const char *host, uint16_t port);
 
 size_t TCPClient_write(void *tcp_client, uint8_t *buf, size_t size);
