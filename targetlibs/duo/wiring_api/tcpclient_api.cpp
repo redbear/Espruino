@@ -16,9 +16,10 @@ void TCPClient_deleteTCPClient(void *tcp_client)
     delete ((TCPClient *)tcp_client);
 }
 
-int TCPClient_connectByIP(void *tcp_client, uint32_t ip, uint16_t port)
+int TCPClient_connectByIP(void *tcp_client, uint8_t *ip, uint16_t port)
 {
-    return ((TCPClient *)tcp_client)->connect(ip, port);
+    IPAddress remoteIP(ip[0], ip[1], ip[2], ip[3]);
+    return ((TCPClient *)tcp_client)->connect(remoteIP, port);
 }
 
 int TCPClient_connectByHostName(void *tcp_client, const char *host, uint16_t port)
