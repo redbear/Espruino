@@ -26,6 +26,14 @@
             Add Object.g/setPrototypeOf (fix #856)
             Fix memory leak when executing bound function with 'this'
             Fix missing PBKDF2 & AES libs on Pico + Linux caused by an untested ESP8266 commit
+            Fix negative Date to string code (fix #854)
+            Convert type warnings to exceptions (to provide stack traces for problems)
+            Add uncaughtException event (fix #846)
+            Stop eval in a switch statement from confusing parsing (Fix #845)
+            Fix regression in 'mode' argument of SPI.setup (allows custom CC3000 pins to work)
+            Fix '.on' with long event names
+            Enable F4Discovery button pull-down. Newer boards don't seem to have one fitted
+            Add 'force' to 'Serial.setConsole' - you can force the console to stay in one place
 
      1v85 : Ensure HttpServerResponse.writeHead actually sends the header right away
              - enables WebSocket Server support from JS
