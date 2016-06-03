@@ -1513,7 +1513,10 @@ CFLAGS += $(WARNFLAGS) $(DEBUGFLAGS)
 LIBS_DEPS += -lcommunication-dynalib -lhal-dynalib -lplatform -lrt-dynalib -lservices-dynalib \
              -lsystem-dynalib -lwiring_globals -lwiring 
 
-LDFLAGS += -L$(ROOT)/targetlibs/duo/linker_scripts/gcc
+LDFLAGS += -L$(ROOT)/targetlibs/duo/linker_scripts/gcc/duo/system-part1
+LDFLAGS += -L$(ROOT)/targetlibs/duo/linker_scripts/gcc/duo/system-part2
+LDFLAGS += -L$(ROOT)/targetlibs/duo/linker_scripts/gcc/duo/user-part
+LDFLAGS += -L$(ROOT)/targetlibs/duo/linker_scripts/gcc/shared/stm32f2xx
 LDFLAGS += -L$(ROOT)/targetlibs/duo/linker_scripts/linker
 LDFLAGS += -L$(ROOT)/targetlibs/duo/linker_scripts/linker/stm32f2xx
 LDFLAGS += -L$(ROOT)/targetlibs/duo/X_lib
