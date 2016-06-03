@@ -311,17 +311,17 @@ int net_duo_createSocket(JsNetwork *net, uint32_t ipAddress, unsigned short port
       if(index >= 0) {
         clients[index].client = TCPClient_newTCPClient();
         if(clients[index].client == NULL) return SOCKET_ERR_MEM;
-        if(!TCPClient_connectByIP(clients[index].client, ipAddress, port)) { // Connect to host failed!
+        ip[3] = (uint8_t)((ipAddress&0xFF000000) >> 24);
+        ip[2] = (uint8_t)((ipAddress&0xFF0000) >> 16);
+        ip[1] = (uint8_t)((ipAddress&0xFF00) >> 8);
+        ip[0] = (uint8_t)(ipAddress&0xFF);
+        if(!TCPClient_connectByIP(clients[index].client, ip, port)) { // Connect to host failed!
           TCPClient_deleteTCPClient(clients[index].client);
           return SOCKET_ERR_TIMEOUT;
         }
         new_socket_id = getNextGlobalSocketId();
         clients[index].socket_id = new_socket_id;
         clients[index].socket_state = SOCKET_STATE_USED;
-        ip[3] = (uint8_t)((ipAddress&0xFF000000) >> 24);
-        ip[2] = (uint8_t)((ipAddress&0xFF0000) >> 16);
-        ip[1] = (uint8_t)((ipAddress&0xFF00) >> 8);
-        ip[0] = (uint8_t)(ipAddress&0xFF);
         destIPLen = jsvGetString(networkGetAddressAsString(ip, 4, 10, '.'), destIPString, sizeof(destIPString)-1);
         destIPString[destIPLen] = '\0';
         jsiConsolePrintf(">INFO: New TCP client socket %d connected to server %s:%d.\n", \
