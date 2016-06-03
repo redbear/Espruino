@@ -25,8 +25,8 @@ typedef void* os_mutex_recursive_t;
 typedef void* condition_variable_t;
 typedef void* os_timer_t;
 
-typedef os_mutex_t gthread_mutex_t;
-typedef os_mutex_recursive_t gthread_recursive_mutex_t;
+//typedef os_mutex_t __gthread_mutex_t;
+//typedef os_mutex_recursive_t __gthread_recursive_mutex_t;
 
 
 /**
@@ -43,11 +43,11 @@ __gthread_t __gthread_self();
 typedef condition_variable_t __gthread_cond_t;
 
 int __gthread_cond_timedwait (__gthread_cond_t *cond,
-                                   gthread_mutex_t *mutex,
+                                   __gthread_mutex_t *mutex,
                                    const __gthread_time_t *abs_timeout);
 
 
-int __gthread_mutex_timedlock (gthread_mutex_t* mutex, const __gthread_time_t* timeout);
+int __gthread_mutex_timedlock (__gthread_mutex_t* mutex, const __gthread_time_t* timeout);
 
 #ifdef	__cplusplus
 }
