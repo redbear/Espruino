@@ -102,7 +102,7 @@ static void deviceConnectedCallback(BLEStatus_t status, uint16_t handle) {
     case BLE_STATUS_OK:
       connect_handle = handle;
       jshSetDeviceInitialised(EV_BLUETOOTH, true);
-      jsiSetConsoleDevice( EV_BLUETOOTH ); // Is it necessary?
+      if (!jsiIsConsoleDeviceForced()) jsiSetConsoleDevice(EV_BLUETOOTH, false);
       break;
 
     default:
@@ -112,7 +112,7 @@ static void deviceConnectedCallback(BLEStatus_t status, uint16_t handle) {
 
 static void deviceDisconnectedCallback(uint16_t handle) {
   connect_handle = 0xFFFF;
-  jsiSetConsoleDevice( DEFAULT_CONSOLE_DEVICE );
+  if (!jsiIsConsoleDeviceForced()) jsiSetConsoleDevice(DEFAULT_CONSOLE_DEVICE, 0);
   jswrap_duo_ble_startAdvertise();
   jshSetDeviceInitialised(EV_BLUETOOTH, false);
 }
