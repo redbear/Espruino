@@ -9,7 +9,22 @@ of beta.  */
 
 #include "ble_api.h"
 
-#define DEVICE_NAME        "Duo JS Interpreter"
+/*
+ * BLE peripheral preferred connection parameters:
+ *     - Minimum connection interval = MIN_CONN_INTERVAL * 1.25 ms, where MIN_CONN_INTERVAL ranges from 0x0006 to 0x0C80
+ *     - Maximum connection interval = MAX_CONN_INTERVAL * 1.25 ms,  where MAX_CONN_INTERVAL ranges from 0x0006 to 0x0C80
+ *     - The SLAVE_LATENCY ranges from 0x0000 to 0x03E8
+ *     - Connection supervision timeout = CONN_SUPERVISION_TIMEOUT * 10 ms, where CONN_SUPERVISION_TIMEOUT ranges from 0x000A to 0x0C80
+ */
+#define MIN_CONN_INTERVAL          0x0028 // 50ms.
+#define MAX_CONN_INTERVAL          0x0190 // 500ms.
+#define SLAVE_LATENCY              0x0000 // No slave latency.
+#define CONN_SUPERVISION_TIMEOUT   0x03E8 // 10s.
+
+// Learn about appearance: http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.gap.appearance.xml
+#define BLE_PERIPHERAL_APPEARANCE  BLE_APPEARANCE_UNKNOWN
+
+#define BLE_DEVICE_NAME        "Duo JS Interpreter"
 
 #define CHAR_TX_MAX_LEN    20
 #define CHAR_RX_MAX_LEN    20
@@ -18,66 +33,107 @@ of beta.  */
 /******************************************************
  *               Variable Definitions
  ******************************************************/
-static uint8_t uart_service_uuid[16] = {0x6E, 0x40, 0x00, 0x01, 0xB5, 0xA3, 0xF3, 0x93, 0xE0, 0xA9, 0xE5, 0x0E, 0x24, 0xDC, 0xCA, 0x9E};
-static uint8_t uart_char_tx_uuid[16] = {0x6E, 0x40, 0x00, 0x02, 0xB5, 0xA3, 0xF3, 0x93, 0xE0, 0xA9, 0xE5, 0x0E, 0x24, 0xDC, 0xCA, 0x9E};
-static uint8_t uart_char_rx_uuid[16] = {0x6E, 0x40, 0x00, 0x03, 0xB5, 0xA3, 0xF3, 0x93, 0xE0, 0xA9, 0xE5, 0x0E, 0x24, 0xDC, 0xCA, 0x9E};
+static uint8_t uart_service_uuid[16] = { 0x6E, 0x40, 0x00, 0x01, 0xB5, 0xA3, 0xF3, 0x93, 0xE0, 0xA9, 0xE5, 0x0E, 0x24, 0xDC, 0xCA, 0x9E };
+static uint8_t uart_char_tx_uuid[16] = { 0x6E, 0x40, 0x00, 0x02, 0xB5, 0xA3, 0xF3, 0x93, 0xE0, 0xA9, 0xE5, 0x0E, 0x24, 0xDC, 0xCA, 0x9E };
+static uint8_t uart_char_rx_uuid[16] = { 0x6E, 0x40, 0x00, 0x03, 0xB5, 0xA3, 0xF3, 0x93, 0xE0, 0xA9, 0xE5, 0x0E, 0x24, 0xDC, 0xCA, 0x9E };
 
-static uint8_t appearance[2] = {
-  0x00, 0x02
+// GAP and GATT characteristics value
+static uint8_t  appearance[2] = {
+  LOW_BYTE(BLE_PERIPHERAL_APPEARANCE),
+  HIGH_BYTE(BLE_PERIPHERAL_APPEARANCE)
 };
 
-static uint8_t change[2] = { // Service change
-  0x00, 0x00
+static uint8_t  change[4] = {
+  0x00, 0x00, 0xFF, 0xFF
 };
 
-static uint8_t conn_param[8] = {
-  0x10, 0x00,  // MIN connection interval: 20ms, step by 1.25ms
-  0x3C, 0x00,  // MAX connection interval: 20ms, step by 1.25ms
-  0x00, 0x00,  // Slave latency
-  0xA0, 0x0F   // Connection timeout: 4s, step by 100ms
+static uint8_t  conn_param[8] = {
+  LOW_BYTE(MIN_CONN_INTERVAL), HIGH_BYTE(MIN_CONN_INTERVAL),
+  LOW_BYTE(MAX_CONN_INTERVAL), HIGH_BYTE(MAX_CONN_INTERVAL),
+  LOW_BYTE(SLAVE_LATENCY), HIGH_BYTE(SLAVE_LATENCY),
+  LOW_BYTE(CONN_SUPERVISION_TIMEOUT), HIGH_BYTE(CONN_SUPERVISION_TIMEOUT)
+};
+
+/*
+ * BLE peripheral advertising parameters:
+ *     - advertising_interval_min: [0x0020, 0x4000], default: 0x0800, unit: 0.625 msec
+ *     - advertising_interval_max: [0x0020, 0x4000], default: 0x0800, unit: 0.625 msec
+ *     - advertising_type:
+ *           BLE_GAP_ADV_TYPE_ADV_IND
+ *           BLE_GAP_ADV_TYPE_ADV_DIRECT_IND
+ *           BLE_GAP_ADV_TYPE_ADV_SCAN_IND
+ *           BLE_GAP_ADV_TYPE_ADV_NONCONN_IND
+ *     - own_address_type:
+ *           BLE_GAP_ADDR_TYPE_PUBLIC
+ *           BLE_GAP_ADDR_TYPE_RANDOM
+ *     - advertising_channel_map:
+ *           BLE_GAP_ADV_CHANNEL_MAP_37
+ *           BLE_GAP_ADV_CHANNEL_MAP_38
+ *           BLE_GAP_ADV_CHANNEL_MAP_39
+ *           BLE_GAP_ADV_CHANNEL_MAP_ALL
+ *     - filter policies:
+ *           BLE_GAP_ADV_FP_ANY
+ *           BLE_GAP_ADV_FP_FILTER_SCANREQ
+ *           BLE_GAP_ADV_FP_FILTER_CONNREQ
+ *           BLE_GAP_ADV_FP_FILTER_BOTH
+ *
+ * Note:  If the advertising_type is set to BLE_GAP_ADV_TYPE_ADV_SCAN_IND or BLE_GAP_ADV_TYPE_ADV_NONCONN_IND,
+ *        the advertising_interval_min and advertising_interval_max should not be set to less than 0x00A0.
+ */
+static advParams_t adv_params = {
+  .adv_int_min   = 0x0030,
+  .adv_int_max   = 0x0030,
+  .adv_type      = BLE_GAP_ADV_TYPE_ADV_IND,
+  .dir_addr_type = BLE_GAP_ADDR_TYPE_PUBLIC,
+  .dir_addr      = {0,0,0,0,0,0},
+  .channel_map   = BLE_GAP_ADV_CHANNEL_MAP_ALL,
+  .filter_policy = BLE_GAP_ADV_FP_ANY
+};
+
+// BLE peripheral advertising data
+static uint8_t adv_data[] = {
+  0x02,
+  BLE_GAP_AD_TYPE_FLAGS,
+  BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE,
+
+  0x11,
+  BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_COMPLETE,
+  0x9E,0xCA,0xDC,0x24,0x0E,0xE5,0xA9,0xE0,0x93,0xF3,0xA3,0xB5,0x01,0x00,0x40,0x6E
+};
+
+// BLE peripheral scan respond data
+static uint8_t scan_response[] = {
+  0x07,
+  BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME,
+  'D','u','o',' ','J','S',
 };
 
 static uint16_t char_tx_value_handle = 0x0000;
 static uint16_t char_rx_value_handle = 0x0000;
-static uint16_t connect_handle = 0xFFFF;
+static uint16_t connect_handle = BLE_CONN_HANDLE_INVALID ;
 
 static uint8_t char_tx_value[CHAR_TX_MAX_LEN];
 static uint8_t char_rx_value[CHAR_RX_MAX_LEN];
 
-static advParams_t adv_params;
-static uint8_t adv_data[] = {
-  // AD flags
-  0x02,
-  0x01,
-  0x06,
-  // Local Name
-  0x07,
-  0x08,
-  'D','u','o',' ','J','S',
-  // Service UUID
-  0x11,
-  0x07,
-  0x9E,0xCA,0xDC,0x24,0x0E,0xE5,0xA9,0xE0,0x93,0xF3,0xA3,0xB5,0x01,0x00,0x40,0x6E
-};
-
 static char rx_buf[TXRX_BUF_LEN];
 static uint8_t rx_buf_len;
 
+
 /**@snippet [Handling the data received over UART] */
 static bool  jswrap_duo_ble_transmit_string(void) {
-  if (connect_handle == 0xFFFF) {
+  if (connect_handle == BLE_CONN_HANDLE_INVALID ) {
 	// If no connection, drain the output buffer
-	while (jshGetCharToTransmit(EV_BLUETOOTH)>=0);
+	while (jshGetCharToTransmit(EV_BLUETOOTH) >= 0);
   }
 
   rx_buf_len = 0;
   int ch = jshGetCharToTransmit(EV_BLUETOOTH);
-  while (ch>=0) {
+  while (ch >= 0) {
     rx_buf[rx_buf_len++] = ch;
 	if(rx_buf_len >= CHAR_RX_MAX_LEN) break;
 	ch = jshGetCharToTransmit(EV_BLUETOOTH);
   }
-  if (rx_buf_len>0) {
+  if (rx_buf_len > 0) {
     ble_sendNotify(char_rx_value_handle, (uint8_t*)rx_buf, rx_buf_len);
   }
 
@@ -85,15 +141,6 @@ static bool  jswrap_duo_ble_transmit_string(void) {
 }
 
 void jswrap_duo_ble_startAdvertise(void) {
-  adv_params.adv_int_min = 0x00A0;
-  adv_params.adv_int_max = 0x01A0;
-  adv_params.adv_type    = 0;
-  adv_params.dir_addr_type = 0;
-  memset(adv_params.dir_addr,0,6);
-  adv_params.channel_map = 0x07;
-  adv_params.filter_policy = 0x00;
-
-  ble_setAdvParams(&adv_params);
   ble_startAdvertising();
 }
 
@@ -111,7 +158,7 @@ static void deviceConnectedCallback(BLEStatus_t status, uint16_t handle) {
 }
 
 static void deviceDisconnectedCallback(uint16_t handle) {
-  connect_handle = 0xFFFF;
+  connect_handle = BLE_CONN_HANDLE_INVALID ;
   if (!jsiIsConsoleDeviceForced()) jsiSetConsoleDevice(DEFAULT_CONSOLE_DEVICE, 0);
   jswrap_duo_ble_startAdvertise();
   jshSetDeviceInitialised(EV_BLUETOOTH, false);
@@ -123,7 +170,7 @@ static int gattWriteCallback(uint16_t value_handle, uint8_t *buffer, uint16_t si
 
   if(char_tx_value_handle == value_handle) {
     memcpy(char_tx_value, buffer, (size<CHAR_TX_MAX_LEN ? size : CHAR_TX_MAX_LEN));
-    for (i=0; i<size; i++) {
+    for (i = 0; i < size; i++) {
       jshPushIOCharEvent(EV_BLUETOOTH, (char)char_tx_value[i]);
     }
   }
@@ -149,7 +196,7 @@ static void ble_stack_init(void) {
  */
 static void gap_params_init(void) {
   ble_addServiceUUID16(0x1800);
-  ble_addCharacteristicUUID16(0x2A00, ATT_PROPERTY_READ|ATT_PROPERTY_WRITE, (uint8_t*)DEVICE_NAME, sizeof(DEVICE_NAME));
+  ble_addCharacteristicUUID16(0x2A00, ATT_PROPERTY_READ|ATT_PROPERTY_WRITE, (uint8_t*)BLE_DEVICE_NAME, sizeof(BLE_DEVICE_NAME));
   ble_addCharacteristicUUID16(0x2A01, ATT_PROPERTY_READ, appearance, sizeof(appearance));
   ble_addCharacteristicUUID16(0x2A04, ATT_PROPERTY_READ, conn_param, sizeof(conn_param));
   ble_addServiceUUID16(0x1801);
@@ -168,7 +215,9 @@ static void services_init(void) {
 /**@brief Function for initializing the Advertising functionality.
  */
 static void advertising_init(void) {
+  ble_setAdvParams(&adv_params);
   ble_setAdvData(sizeof(adv_data), adv_data);
+  ble_setScanRspData(sizeof(scan_response), scan_response);
 }
 
 
