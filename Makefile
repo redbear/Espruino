@@ -1490,7 +1490,7 @@ SOURCES += \
   targets/duo/wiring.c \
   targets/duo/interrupts.c 
 
-LINKER_FILE = $(ROOT)/targetlibs/duo/linker_scripts/gcc/linker.ld
+LINKER_FILE = $(ROOT)/targetlibs/duo/linker_scripts/gcc/duo/user-part/linker.ld
 
 # warnning flags
 WARNFLAGS += -Wall -Wno-switch -Wno-error=deprecated-declarations -Wno-conversion -Wno-unused-variable \
