@@ -77,7 +77,11 @@
 #                         # used in build_platform_config.py
 
 ifndef GENDIR
+ifeq ($(OS),Windows_NT)
+GENDIR=$(CURDIR)/gen
+else
 GENDIR=$(shell pwd)/gen
+endif
 endif
 
 ifndef SINGLETHREAD
