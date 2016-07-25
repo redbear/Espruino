@@ -654,3 +654,6 @@ JshPinState jshPinGetState(Pin pin) {
 void jshEnableWatchDog(JsVarFloat timeout) {
   return;
 }
+
+void jshKickWatchDog() {
+}
