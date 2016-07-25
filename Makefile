@@ -1916,6 +1916,7 @@ $(PININFOFILE).c $(PININFOFILE).h: scripts/build_pininfo.py
 	$(Q)python scripts/build_pininfo.py $(BOARD) $(PININFOFILE).c $(PININFOFILE).h
 endif
 
+ifndef REDBEARDUO # RedBear Duo use its own linker file
 ifndef NRF5X # nRF5x devices use their own linker files that aren't automatically generated.
 ifndef EFM32
 $(LINKER_FILE): scripts/build_linker.py
@@ -1923,6 +1924,7 @@ $(LINKER_FILE): scripts/build_linker.py
 	$(Q)python scripts/build_linker.py $(BOARD) $(LINKER_FILE) $(BUILD_LINKER_FLAGS)
 endif # EFM32
 endif # NRF5X
+endif # REDBEARDUO
 
 $(PLATFORM_CONFIG_FILE): boards/$(BOARD).py scripts/build_platform_config.py
 	@echo Generating platform configs
